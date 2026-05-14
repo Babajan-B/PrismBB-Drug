@@ -1,0 +1,234 @@
+{% extends "base.html" %}
+
+{% block title %}Docking · {{ super() }}{% endblock %}
+
+{% block content %}
+<!-- Hero -->
+<section class="hero">
+    <span class="badge">AUTODOCK VINA</span>
+    <h1>Protein-Ligand <span class="accent">Molecular Docking</span></h1>
+    <p>Upload a receptor and a ligand, convert to PDBQT, run Vina, and explore the binding poses in 3D.</p>
+</section>
+
+<!-- Pipeline status -->
+<div class="card">
+    <div class="progress-steps" id="dockSteps">
+        <div class="step active" data-step="upload"><div class="step-icon">①</div><span>Upload</span></div>
+        <div class="step-connector"></div>
+        <div class="step" data-step="convert"><div class="step-icon">②</div><span>Convert</span></div>
+        <div class="step-connector"></div>
+        <div class="step" data-step="grid"><div class="step-icon">③</div><span>Grid &amp; params</span></div>
+        <div class="step-connector"></div>
+        <div class="step" data-step="dock"><div class="step-icon">④</div><span>Dock &amp; results</span></div>
+    </div>
+    <div id="dockBackendBadge" class="docking-mode-badge" style="margin-top:14px"></div>
+</div>
+
+<div id="messageContainer" class="message-container"></div>
+
+<!-- Step 1: Upload -->
+<div class="card">
+    <div class="section-header">
+        <h2>① Upload molecules</h2>
+        <p>Drop a protein PDB and a ligand PDB or SDF below.</p>
+    </div>
+
+    <div class="docking-grid">
+        <!-- Protein upload -->
+        <div class="result-card">
+            <h3>Receptor (protein)</h3>
+            <div class="file-upload-container">
+                <input type="file" id="proteinInput" class="file-input" accept=".pdb,.ent" />
+                <div class="file-upload-area" id="proteinDrop">
+                    <div class="file-upload-icon">🧬</div>
+                    <div class="file-upload-text">
+                        <strong>Protein PDB</strong><br/>
+                        <small>.pdb or .ent — typically &gt; 80 ATOM records</small>
+                    </div>
+                </div>
+                <div class="file-info" id="proteinInfo" style="display:none">
+                    <span class="file-name"></span>
+                    <span class="file-size"></span>
+                    <button type="button" class="file-remove" data-clear="protein">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Ligand upload -->
+        <div class="result-card">
+            <h3>Ligand (small molecule)</h3>
+            <div class="file-upload-container">
+                <input type="file" id="ligandInput" class="file-input" accept=".pdb,.sdf,.mol" />
+                <div class="file-upload-area" id="ligandDrop">
+                    <div class="file-upload-icon">💊</div>
+                    <div class="file-upload-text">
+                        <strong>Ligand PDB / SDF</strong><br/>
+                        <small>.pdb, .sdf, or .mol — single molecule</small>
+                    </div>
+                </div>
+                <div class="file-info" id="ligandInfo" style="display:none">
+                    <span class="file-name"></span>
+                    <span class="file-size"></span>
+                    <button type="button" class="file-remove" data-clear="ligand">✕</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions" style="margin-top:18px">
+        <button id="btnConvert" class="btn btn-primary" disabled>
+            <span class="btn-icon">⟶</span>
+            <span class="btn-text">Convert both files to PDBQT</span>
+        </button>
+        <div class="form-hint" id="convertHint">Upload both files to enable conversion</div>
+    </div>
+</div>
+
+<!-- Step 2: Conversion preview -->
+<div class="card hidden" id="conversionCard">
+    <div class="section-header">
+        <h2>② PDBQT conversion</h2>
+        <p>Generated atom types and partial charges via Meeko/RDKit.</p>
+    </div>
+    <div class="docking-grid">
+        <div class="result-card">
+            <h3>Receptor.pdbqt</h3>
+            <div class="pdbqt-stats" id="proteinStats"></div>
+            <pre class="code-block" id="proteinPdbqt"></pre>
+            <button class="btn btn-small" data-download="protein">Download</button>
+        </div>
+        <div class="result-card">
+            <h3>Ligand.pdbqt</h3>
+            <div class="pdbqt-stats" id="ligandStats"></div>
+            <pre class="code-block" id="ligandPdbqt"></pre>
+            <button class="btn btn-small" data-download="ligand">Download</button>
+        </div>
+    </div>
+</div>
+
+<!-- Step 3: Grid + parameters -->
+<div class="card hidden" id="paramsCard">
+    <div class="section-header">
+        <h2>③ Grid box &amp; docking parameters</h2>
+        <p>Define the search space and Vina parameters.</p>
+    </div>
+
+    <div class="docking-grid">
+        <!-- Grid -->
+        <div class="result-card">
+            <h3>Grid box (Å)</h3>
+            <div class="grid-inputs">
+                <label>Center X<input type="number" id="cx" value="0" step="0.1"></label>
+                <label>Center Y<input type="number" id="cy" value="0" step="0.1"></label>
+                <label>Center Z<input type="number" id="cz" value="0" step="0.1"></label>
+                <label>Size X<input type="number" id="sx" value="20" step="1" min="1" max="50"></label>
+                <label>Size Y<input type="number" id="sy" value="20" step="1" min="1" max="50"></label>
+                <label>Size Z<input type="number" id="sz" value="20" step="1" min="1" max="50"></label>
+            </div>
+            <button class="btn btn-small btn-ghost" id="btnAutoGrid">Auto-detect from ligand</button>
+        </div>
+
+        <!-- Params -->
+        <div class="result-card">
+            <h3>Vina parameters</h3>
+            <div class="grid-inputs">
+                <label>Scoring
+                    <select id="ff">
+                        <option value="vina" selected>vina</option>
+                        <option value="ad4">ad4</option>
+                        <option value="vinardo">vinardo</option>
+                    </select>
+                </label>
+                <label>Modes
+                    <input type="number" id="nmodes" value="9" min="1" max="20">
+                </label>
+                <label>Exhaustiveness
+                    <input type="number" id="exh" value="8" min="1" max="32">
+                </label>
+                <label>Energy range
+                    <input type="number" id="erange" value="3.0" step="0.5" min="0.5" max="10">
+                </label>
+            </div>
+        </div>
+    </div>
+
+    <div class="form-actions" style="margin-top:18px">
+        <button id="btnDock" class="btn btn-primary">
+            <span class="btn-icon">▶</span>
+            <span class="btn-text">Run docking</span>
+        </button>
+        <div class="form-hint" id="dockHint">Pose results will appear below.</div>
+    </div>
+</div>
+
+<!-- Loading -->
+<div class="card hidden" id="dockLoadingCard">
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <h3>Docking in progress…</h3>
+        <p>Searching the grid box for the best binding poses.</p>
+    </div>
+</div>
+
+<!-- Step 4: Results -->
+<div class="card hidden" id="resultsCard">
+    <div class="results-header">
+        <h2>④ Docking results</h2>
+        <button class="btn btn-secondary" id="btnReset">
+            <span class="btn-icon">↻</span><span class="btn-text">New run</span>
+        </button>
+    </div>
+
+    <div class="docking-summary">
+        <div class="kpi">
+            <span class="kpi-label">Best affinity</span>
+            <span class="kpi-value" id="bestAffinity">—</span>
+            <span class="kpi-unit">kcal/mol</span>
+        </div>
+        <div class="kpi">
+            <span class="kpi-label">Avg affinity</span>
+            <span class="kpi-value" id="avgAffinity">—</span>
+            <span class="kpi-unit">kcal/mol</span>
+        </div>
+        <div class="kpi">
+            <span class="kpi-label">Modes</span>
+            <span class="kpi-value" id="totalModes">—</span>
+            <span class="kpi-unit"></span>
+        </div>
+        <div class="kpi">
+            <span class="kpi-label">Engine</span>
+            <span class="kpi-value mono" id="engineMode" style="font-size:1rem">—</span>
+            <span class="kpi-unit"></span>
+        </div>
+    </div>
+
+    <div class="result-card full-width">
+        <h3>Binding poses</h3>
+        <div class="table-wrap">
+            <table class="poses-table" id="posesTable">
+                <thead>
+                    <tr><th>Mode</th><th>Affinity (kcal/mol)</th><th>RMSD l.b.</th><th>RMSD u.b.</th></tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="result-card full-width">
+        <h3>3D pose viewer</h3>
+        <div class="viewer-container">
+            <div id="dockViewer3D" class="molecular-viewer"></div>
+        </div>
+        <div class="viewer-info" id="dockViewerInfo">Receptor in cartoon, ligand in stick — best pose by default.</div>
+    </div>
+
+    <div class="result-card full-width">
+        <h3>Vina log</h3>
+        <pre class="code-block" id="vinaLog"></pre>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/docking.js') }}"></script>
+{% endblock %}

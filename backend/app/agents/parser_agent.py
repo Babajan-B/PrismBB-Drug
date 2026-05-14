@@ -19,6 +19,5 @@ parser_agent = Agent(
         "If SMILES is empty, null, or invalid, return {\"error\": \"Invalid or empty SMILES string\"}."
     ],
     markdown=False,
-    show_tool_calls=False,
     debug_mode=False
 ) 

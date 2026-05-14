@@ -27,11 +27,22 @@ class MolecularViewer {
             defaultcolors: $3Dmol.rasmolElementColors
         });
         
-        // Set default camera position
-        this.viewer.setBackgroundColor('#f8f9fa');
+        // Match background to current theme
+        this.applyThemeBackground();
+        // React to theme changes
+        const obs = new MutationObserver(() => this.applyThemeBackground());
+        obs.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
         this.resetView();
     }
     
+    applyThemeBackground() {
+        if (!this.viewer) return;
+        const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+        const bg = theme === 'dark' ? '#0b0d12' : '#f5f6fb';
+        this.viewer.setBackgroundColor(bg);
+        this.viewer.render();
+    }
+
     setupControls() {
         // Rotate button
         const rotateBtn = document.getElementById('rotateBtn');

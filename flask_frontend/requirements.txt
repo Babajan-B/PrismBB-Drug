@@ -1,2 +1,7 @@
-Flask==3.0.0
-requests==2.31.0 
+# Flask frontend dependencies (cross-platform)
+Flask>=3.0
+requests>=2.31
+
+# Production WSGI server (per OS)
+gunicorn>=22.0; sys_platform != "win32"
+waitress>=3.0;  sys_platform == "win32"

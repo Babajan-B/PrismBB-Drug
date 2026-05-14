@@ -1,0 +1,10 @@
+# =====================================================================
+# Root requirements — combined install for the full stack.
+#   pip install -r requirements.txt
+#
+# Splits into:
+#   - backend  (FastAPI · RDKit · admet-ai · meeko · Vina)
+#   - frontend (Flask + gunicorn)
+# =====================================================================
+-r backend/requirements.txt
+-r flask_frontend/requirements.txt

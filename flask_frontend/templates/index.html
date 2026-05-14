@@ -1,98 +1,92 @@
 {% extends "base.html" %}
 
-{% block title %}Molecular Analysis - {{ super() }}{% endblock %}
+{% block title %}Analyze · {{ super() }}{% endblock %}
 
 {% block content %}
-<!-- Hero Section -->
-<div class="hero">
-    <h1>🧬 Advanced Molecular Analysis</h1>
-    <p>
-        Analyze molecular structures using SMILES notation. Get comprehensive molecular descriptors, 
-        3D conformers, and ADMET predictions powered by RDKit and AI agents.
-    </p>
-</div>
+<!-- Hero -->
+<section class="hero">
+    <span class="badge">v2 · MULTI-AGENT PIPELINE</span>
+    <h1>Molecular Insights, <span class="accent">Powered by AI</span></h1>
+    <p>Parse SMILES, generate 3D conformers, and predict ADMET properties — all orchestrated by a coordinated team of Agno agents.</p>
+</section>
 
 <!-- Progress Steps -->
 <div class="card">
     <div class="progress-steps" id="progressSteps">
         <div class="step active" data-step="input">
-            <div class="step-icon">⌨️</div>
+            <div class="step-icon">①</div>
             <span>Input SMILES</span>
         </div>
         <div class="step-connector"></div>
         <div class="step" data-step="analysis">
-            <div class="step-icon">🧠</div>
-            <span>Analysis</span>
+            <div class="step-icon">②</div>
+            <span>Multi-Agent Analysis</span>
         </div>
         <div class="step-connector"></div>
         <div class="step" data-step="results">
-            <div class="step-icon">📊</div>
-            <span>Results</span>
+            <div class="step-icon">③</div>
+            <span>Insights &amp; 3D</span>
         </div>
     </div>
 </div>
 
-<!-- Error/Success Messages -->
+<!-- Messages -->
 <div id="messageContainer" class="message-container"></div>
 
 <!-- Input Section -->
 <div class="card" id="inputSection">
     <div class="section-header">
-        <h2>🔬 Enter SMILES String</h2>
-        <p>Input a SMILES (Simplified Molecular Input Line Entry System) string to analyze molecular properties</p>
+        <h2>Enter a molecule</h2>
+        <p>Paste a SMILES string or upload a structure file (SDF, PDB, MOL, XYZ).</p>
     </div>
 
-    <form id="analysisForm" class="analysis-form">
-        <div class="input-method-tabs">
-            <button type="button" class="tab-btn active" data-method="smiles">SMILES Input</button>
-            <button type="button" class="tab-btn" data-method="file">File Upload</button>
+    <form id="analysisForm" class="analysis-form" autocomplete="off">
+        <div style="display:flex;justify-content:center;">
+            <div class="input-method-tabs" role="tablist">
+                <button type="button" class="tab-btn active" data-method="smiles" role="tab" aria-selected="true">SMILES</button>
+                <button type="button" class="tab-btn" data-method="file" role="tab" aria-selected="false">File upload</button>
+            </div>
         </div>
 
-        <!-- SMILES Input Section -->
+        <!-- SMILES -->
         <div id="smilesInputSection" class="input-section active">
             <div class="form-group">
-                <label for="smilesInput" class="form-label">SMILES String</label>
+                <label for="smilesInput" class="form-label">SMILES notation</label>
                 <div class="input-container">
-                    <input 
-                        type="text" 
-                        id="smilesInput" 
-                        name="smiles" 
-                        class="form-input" 
-                        placeholder="e.g., CCO (ethanol) or CC(=O)Oc1ccccc1C(=O)O (aspirin)"
+                    <input
+                        type="text"
+                        id="smilesInput"
+                        name="smiles"
+                        class="form-input"
+                        placeholder="e.g.  CC(=O)Oc1ccccc1C(=O)O   (aspirin)"
                         value="CCO"
-                    >
-                    <div class="char-counter">
-                        <span id="charCount">3</span> chars
-                    </div>
+                        spellcheck="false"
+                        autocapitalize="off"
+                        autocorrect="off"
+                    />
+                    <div class="char-counter"><span id="charCount">3</span>&nbsp;chars</div>
                 </div>
                 <div class="input-error" id="smilesError"></div>
             </div>
         </div>
 
-        <!-- File Upload Section -->
+        <!-- File upload -->
         <div id="fileInputSection" class="input-section">
             <div class="form-group">
-                <label for="fileInput" class="form-label">Upload Molecular Structure File</label>
+                <label for="fileInput" class="form-label">Upload structure file</label>
                 <div class="file-upload-container">
-                    <input 
-                        type="file" 
-                        id="fileInput" 
-                        name="file" 
-                        class="file-input" 
-                        accept=".sdf,.pdb,.mol,.xyz"
-                    >
+                    <input type="file" id="fileInput" name="file" class="file-input" accept=".sdf,.pdb,.mol,.xyz" />
                     <div class="file-upload-area" id="fileUploadArea">
-                        <div class="file-upload-icon">📁</div>
+                        <div class="file-upload-icon">↑</div>
                         <div class="file-upload-text">
-                            <strong>Choose file or drag & drop</strong>
-                            <br>
-                            <small>Supported formats: SDF, PDB, MOL, XYZ</small>
+                            <strong>Drop a file here or click to browse</strong><br/>
+                            <small>SDF · PDB · MOL · XYZ — up to 5 MB</small>
                         </div>
                     </div>
-                    <div class="file-info" id="fileInfo" style="display: none;">
+                    <div class="file-info" id="fileInfo" style="display:none;">
                         <span class="file-name"></span>
                         <span class="file-size"></span>
-                        <button type="button" class="file-remove" id="removeFile">✕</button>
+                        <button type="button" class="file-remove" id="removeFile" aria-label="Remove file">✕</button>
                     </div>
                 </div>
                 <div class="input-error" id="fileError"></div>
@@ -101,18 +95,16 @@
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary" id="analyzeBtn">
-                <span class="btn-icon">🔬</span>
-                <span class="btn-text">Analyze Molecule</span>
+                <span class="btn-icon">→</span>
+                <span class="btn-text">Run multi-agent analysis</span>
             </button>
-            <div class="form-hint">
-                💡 Try the examples below or upload a molecular structure file
-            </div>
+            <div class="form-hint">Press Enter to analyze · Try a quick example below</div>
         </div>
     </form>
 
     <!-- Quick Examples -->
     <div class="examples-section">
-        <h3>🧪 Quick Examples</h3>
+        <h3>Quick examples</h3>
         <div class="examples-grid">
             <div class="example-card" data-smiles="CCO">
                 <div class="example-name">Ethanol</div>
@@ -122,110 +114,116 @@
             <div class="example-card" data-smiles="CC(=O)OC1=CC=CC=C1C(=O)O">
                 <div class="example-name">Aspirin</div>
                 <div class="example-description">Pain reliever</div>
-                <div class="example-smiles">CC(=O)OC1=CC=CC=C1C(=O)O</div>
+                <div class="example-smiles">CC(=O)Oc1ccccc1C(=O)O</div>
             </div>
             <div class="example-card" data-smiles="CN1C=NC2=C1C(=O)N(C(=O)N2C)C">
                 <div class="example-name">Caffeine</div>
-                <div class="example-description">Stimulant</div>
+                <div class="example-description">CNS stimulant</div>
                 <div class="example-smiles">CN1C=NC2=C1C(=O)N(C(=O)N2C)C</div>
             </div>
             <div class="example-card" data-smiles="CC(C)CC1=CC=C(C=C1)C(C)C(=O)O">
                 <div class="example-name">Ibuprofen</div>
-                <div class="example-description">Anti-inflammatory</div>
-                <div class="example-smiles">CC(C)CC1=CC=C(C=C1)C(C)C(=O)O</div>
+                <div class="example-description">NSAID</div>
+                <div class="example-smiles">CC(C)Cc1ccc(cc1)C(C)C(=O)O</div>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Loading Section -->
+<!-- Loading -->
 <div class="card hidden" id="loadingSection">
     <div class="loading-container">
-        <div class="loading-spinner"></div>
-        <h3>Analyzing Molecule...</h3>
-        <p>Our AI agents are processing your SMILES string and calculating molecular descriptors</p>
+        <div class="loading-spinner" aria-hidden="true"></div>
+        <h3>Analyzing molecule…</h3>
+        <p>Our agent team is parsing, embedding, and predicting in parallel.</p>
         <div class="loading-steps">
-            <div class="loading-step active" id="loadingParse">
-                <span class="loading-icon">🔍</span>
-                <span>Parsing SMILES</span>
-            </div>
-            <div class="loading-step" id="loadingConformer">
-                <span class="loading-icon">🧪</span>
-                <span>Generating 3D Structure</span>
-            </div>
-            <div class="loading-step" id="loadingAnalysis">
-                <span class="loading-icon">📊</span>
-                <span>Computing Descriptors</span>
-            </div>
+            <div class="loading-step active" id="loadingParse"><span>◇</span><span>Parser Agent</span></div>
+            <div class="loading-step" id="loadingConformer"><span>◇</span><span>Conformer Agent</span></div>
+            <div class="loading-step" id="loadingAnalysis"><span>◇</span><span>ADMET Agent</span></div>
+            <div class="loading-step" id="loadingRender"><span>◇</span><span>Render Agent</span></div>
         </div>
     </div>
 </div>
 
-<!-- Results Section -->
+<!-- Results -->
 <div class="card hidden" id="resultsSection">
     <div class="results-header">
-        <h2>🧬 Analysis Results</h2>
+        <h2>Analysis Results</h2>
         <button class="btn btn-secondary" id="newAnalysisBtn">
-            <span class="btn-icon">🔄</span>
-            <span class="btn-text">New Analysis</span>
+            <span class="btn-icon">↻</span>
+            <span class="btn-text">New analysis</span>
         </button>
     </div>
 
-    <!-- 3D Molecular Viewer -->
+    <!-- 3D Viewer -->
     <div class="result-card full-width" id="moleculeViewer3D">
-        <h3>🌐 3D Molecular Structure</h3>
+        <h3>3D Molecular Structure</h3>
         <div class="viewer-container">
             <div id="viewer3d" class="molecular-viewer"></div>
             <div class="viewer-controls">
-                <button class="btn btn-small" id="rotateBtn">🔄 Rotate</button>
-                <button class="btn btn-small" id="resetViewBtn">🎯 Reset View</button>
-                <button class="btn btn-small" id="styleBtn">🎨 Style</button>
+                <button class="btn btn-small" id="rotateBtn">Rotate</button>
+                <button class="btn btn-small" id="resetViewBtn">Reset</button>
+                <button class="btn btn-small" id="styleBtn">Style</button>
             </div>
         </div>
         <div class="viewer-info" id="viewerInfo">
-            <p>3D structure will appear here after analysis</p>
+            <p>3D structure will appear after analysis completes.</p>
         </div>
     </div>
 
-    <!-- Basic Properties -->
+    <!-- Properties -->
     <div class="results-grid">
         <div class="result-card">
-            <h3>🔬 Basic Properties</h3>
-            <div class="property-list" id="basicProperties">
-                <!-- Populated by JavaScript -->
-            </div>
+            <h3>Basic Properties</h3>
+            <div class="property-list" id="basicProperties"></div>
         </div>
-
         <div class="result-card">
-            <h3>💊 Drug-like Properties</h3>
-            <div class="property-list" id="drugProperties">
-                <!-- Populated by JavaScript -->
+            <h3>Drug-like Properties</h3>
+            <div class="property-list" id="drugProperties"></div>
+        </div>
+    </div>
+
+    <!-- Descriptors -->
+    <div class="result-card full-width">
+        <h3>Complete Molecular Descriptors</h3>
+        <div class="descriptors-grid" id="allDescriptors"></div>
+    </div>
+
+    <!-- 3D Info -->
+    <div class="result-card full-width" id="structureInfo">
+        <h3>3D Structure Metadata</h3>
+        <div class="structure-details" id="structureDetails"></div>
+    </div>
+
+    <!-- ADMET -->
+    <div class="result-card full-width" id="admetResults">
+        <div class="admet-header">
+            <h3>ADMET Predictions <span class="admet-count" id="admetCount"></span></h3>
+            <div class="admet-toolbar">
+                <div class="admet-search">
+                    <span class="admet-search-icon">⌕</span>
+                    <input type="search" id="admetFilter" placeholder="Filter properties…" autocomplete="off" />
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- All Descriptors -->
-    <div class="result-card full-width">
-        <h3>📊 Complete Molecular Descriptors</h3>
-        <div class="descriptors-grid" id="allDescriptors">
-            <!-- Populated by JavaScript -->
-        </div>
-    </div>
+        <div class="admet-chips" id="admetChips"></div>
 
-    <!-- 3D Structure Info -->
-    <div class="result-card full-width" id="structureInfo">
-        <h3>🧪 3D Molecular Structure</h3>
-        <div class="structure-details" id="structureDetails">
-            <!-- Populated by JavaScript -->
+        <div class="table-wrap admet-table-wrap">
+            <table class="admet-table" id="admetTable">
+                <thead>
+                    <tr>
+                        <th data-sort="category">Category</th>
+                        <th data-sort="property">Property</th>
+                        <th data-sort="value" class="num">Value</th>
+                        <th>Unit</th>
+                        <th data-sort="probability" class="num">Confidence</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
         </div>
-    </div>
-
-    <!-- ADMET Results -->
-    <div class="result-card full-width" id="admetResults">
-        <h3>🧬 ADMET Predictions</h3>
-        <div class="admet-grid" id="admetGrid">
-            <!-- Populated by JavaScript -->
-        </div>
+        <div id="admetEmpty" class="admet-empty hidden">No properties match your filter.</div>
     </div>
 </div>
 {% endblock %}
@@ -234,4 +232,4 @@
 <script src="{{ url_for('static', filename='js/molecular-viewer.js') }}"></script>
 <script src="{{ url_for('static', filename='js/file-upload.js') }}"></script>
 <script src="{{ url_for('static', filename='js/analysis.js') }}"></script>
-{% endblock %} 
+{% endblock %}

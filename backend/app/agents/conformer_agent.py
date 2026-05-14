@@ -21,6 +21,5 @@ conformer_agent = Agent(
         "Include information about the force field used for optimization in the response."
     ],
     markdown=False,
-    show_tool_calls=False,
     debug_mode=False
 ) 

@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+
+{% block title %}About · {{ super() }}{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <span class="badge">ABOUT</span>
+    <h1>What runs <span class="accent">under the hood</span></h1>
+    <p>A coordinated team of LLM agents wraps RDKit + ADMET-AI behind a FastAPI service.</p>
+</section>
+
+<div class="card about-section">
+    <h2 class="section-header" style="text-align:left">Multi-Agent Architecture</h2>
+    <p>
+        PrismBB Drug is composed of four cooperative agents orchestrated by Agno.
+        Each agent owns a single responsibility and exposes typed tool calls so the
+        analysis pipeline is reproducible and inspectable. A fifth pipeline layer
+        runs AutoDock Vina for protein-ligand docking.
+    </p>
+
+    <div class="agents-grid">
+        <div class="agent-card">
+            <div class="agent-icon">P</div>
+            <h4>ParserAgent</h4>
+            <p>RDKit-based SMILES sanitization with 17+ descriptors, InChI, and Lipinski checks.</p>
+        </div>
+        <div class="agent-card">
+            <div class="agent-icon">C</div>
+            <h4>ConformerAgent</h4>
+            <p>Generates 3D conformers using UFF or MMFF force fields and outputs PDB blocks.</p>
+        </div>
+        <div class="agent-card">
+            <div class="agent-icon">A</div>
+            <h4>ADMETAgent</h4>
+            <p>Predicts absorption, distribution, metabolism, excretion, and toxicity properties.</p>
+        </div>
+        <div class="agent-card">
+            <div class="agent-icon">R</div>
+            <h4>RenderAgent</h4>
+            <p>Aggregates outputs into a single structured payload consumed by the UI.</p>
+        </div>
+    </div>
+
+    <h3>Highlighted capabilities</h3>
+    <ul class="feature-list">
+        <li>SMILES parsing &amp; validation</li>
+        <li>InChI / InChIKey generation</li>
+        <li>TPSA, LogP, HBD, HBA, rotatable bonds</li>
+        <li>Lipinski violations and drug-likeness</li>
+        <li>3D conformer embedding (UFF / MMFF)</li>
+        <li>ADMET property prediction</li>
+        <li>Live 3D molecular visualization</li>
+        <li>SDF · PDB · MOL · XYZ uploads</li>
+    </ul>
+
+    <h3>Technology stack</h3>
+    <ul class="feature-list">
+        <li>FastAPI + Pydantic</li>
+        <li>Agno multi-agent framework</li>
+        <li>Groq LLaMA 3.1 70B</li>
+        <li>RDKit (cheminformatics)</li>
+        <li>ADMET-AI (property models)</li>
+        <li>3Dmol.js (WebGL viewer)</li>
+        <li>Flask (proxy + UI)</li>
+        <li>Vanilla ES modules — zero npm bloat</li>
+    </ul>
+</div>
+{% endblock %}

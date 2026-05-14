@@ -1,0 +1,54 @@
+# ============================================================================
+# PrismBB Drug — local development stack
+#   `docker compose up`
+#
+#   http://localhost:3000   →   Flask UI (Analyze / Docking / Examples / About)
+#   http://localhost:8000   →   FastAPI backend (RDKit · ADMET-AI · Vina)
+# ============================================================================
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: prismbb-backend
+    environment:
+      PORT: 8000
+      WEB_CONCURRENCY: 1
+      # Set your Groq key here (or in a .env file next to this compose) to
+      # enable real Agno-LLM agents. Without it, the routes use direct
+      # RDKit/ADMET-AI fallbacks — everything still works.
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      AGNO_TELEMETRY: "false"
+      ADMET_AI_CACHE_DIR: /data/admet_ai
+      HF_HOME: /data/huggingface
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist ADMET-AI model weights between container restarts (~2 GB)
+      - admet-cache:/data
+    healthcheck:
+      test: ["CMD", "curl", "-fsSL", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./flask_frontend
+      dockerfile: Dockerfile
+    container_name: prismbb-frontend
+    environment:
+      PORT: 3000
+      BACKEND_URL: http://backend:8000
+      WEB_CONCURRENCY: 2
+    ports:
+      - "3000:3000"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+
+volumes:
+  admet-cache:

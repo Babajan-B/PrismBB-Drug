@@ -1,16 +1,34 @@
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "agno-admet-backend"
-version = "0.1.0"
+name = "prismbb-drug-backend"
+version = "0.2.0"
+description = "PrismBB Drug — AI-Powered Drug Discovery Platform (FastAPI · RDKit · ADMET-AI · Agno · AutoDock Vina)"
+readme = "../README.md"
+requires-python = ">=3.10"
+
+# Authoritative dep list lives in requirements.txt — keeping a short mirror
+# here so `pip install .` still works for editable installs.
 dependencies = [
   "fastapi>=0.112",
   "uvicorn[standard]>=0.30",
   "pydantic>=2.7",
   "python-multipart>=0.0.9",
-  "rdkit-pypi>=2022.9.5",
-  "agno>=1.7",
-  "admet-ai>=0.2.6; python_version>='3.9'"
-] 
+  "rdkit>=2024.3.1",
+  "biopython>=1.83",
+  "meeko>=0.7.0",
+  "gemmi>=0.6.5",
+  "agno>=2.0,<3",
+  "admet-ai>=1.4.0",
+  "requests>=2.31",
+  "python-dotenv>=1.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.23", "httpx>=0.27", "ruff>=0.6"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"

@@ -1,4 +1,4 @@
-// Analysis-specific JavaScript for Molecular Analytics
+// Analysis-specific JavaScript for PrismBB Drug
 class AnalysisApp {
     constructor() {
         this.currentResults = null;
@@ -253,18 +253,18 @@ class AnalysisApp {
     populateBasicProperties() {
         const container = document.getElementById('basicProperties');
         const { molecule } = this.currentResults;
-        
+
         const properties = [
-            { label: 'SMILES', value: molecule.smiles, type: 'code' },
-            { label: 'Formula', value: molecule.formula, type: 'formula' },
-            { label: 'Molecular Weight', value: `${molecule.weight} g/mol`, type: 'weight' },
-            { label: 'InChI Key', value: molecule.inchikey ? `${molecule.inchikey.substring(0, 14)}...` : 'N/A', type: 'code' }
+            { label: 'SMILES', value: molecule.smiles },
+            { label: 'Formula', value: molecule.formula },
+            { label: 'Mol. weight', value: `${molecule.weight} g/mol` },
+            { label: 'InChI Key', value: molecule.inchikey ? `${molecule.inchikey.substring(0, 14)}…` : 'N/A' }
         ];
 
         container.innerHTML = properties.map(prop => `
             <div class="property-item">
-                <span class="property-label">${prop.label}</span>
-                <span class="property-value ${prop.type}">${prop.value}</span>
+                <span class="property-name">${prop.label}</span>
+                <span class="property-value">${prop.value}</span>
             </div>
         `).join('');
     }
@@ -272,7 +272,7 @@ class AnalysisApp {
     populateDrugProperties() {
         const container = document.getElementById('drugProperties');
         const { descriptors } = this.currentResults.molecule;
-        
+
         const drugKeys = ['lipinski_violations', 'logp', 'hbd', 'hba', 'tpsa'];
         const properties = drugKeys.map(key => ({
             label: window.molecularApp.formatDescriptorName(key),
@@ -282,7 +282,7 @@ class AnalysisApp {
 
         container.innerHTML = properties.map(prop => `
             <div class="property-item">
-                <span class="property-label">${prop.label}</span>
+                <span class="property-name">${prop.label}</span>
                 <span class="property-value ${prop.color}">${prop.value}</span>
             </div>
         `).join('');
@@ -291,13 +291,13 @@ class AnalysisApp {
     populateAllDescriptors() {
         const container = document.getElementById('allDescriptors');
         const { descriptors } = this.currentResults.molecule;
-        
+
         container.innerHTML = Object.entries(descriptors).map(([key, value]) => `
-            <div class="descriptor-card">
-                <div class="descriptor-label">${window.molecularApp.formatDescriptorName(key)}</div>
-                <div class="descriptor-value ${window.molecularApp.getDescriptorColor(key, value)}">
+            <div class="descriptor-item">
+                <span class="descriptor-label">${window.molecularApp.formatDescriptorName(key)}</span>
+                <span class="descriptor-value ${window.molecularApp.getDescriptorColor(key, value)}">
                     ${window.molecularApp.formatNumber(value)}
-                </div>
+                </span>
             </div>
         `).join('');
     }
@@ -314,14 +314,11 @@ class AnalysisApp {
             
             container.innerHTML = `
                 <div class="message success">
-                    <span>✅</span>
+                    <span>✓</span>
                     <div>
-                        <strong>3D Structure Generated Successfully</strong>
-                        <br>
-                        <small>
-                            ${atomCount} atoms • ${forcefield} force field • 
-                            ${hasCoords ? 'Optimized geometry' : 'Basic structure'}
-                        </small>
+                        <strong>3D structure generated</strong>
+                        &nbsp;·&nbsp;
+                        <small>${atomCount} atoms · ${forcefield} force field · ${hasCoords ? 'optimized geometry' : 'basic structure'}</small>
                     </div>
                 </div>
             `;
@@ -331,7 +328,7 @@ class AnalysisApp {
         } else {
             container.innerHTML = `
                 <div class="message error">
-                    <span>❌</span>
+                    <span>✕</span>
                     <span>Failed to generate 3D structure: ${conformer?.error || 'Unknown error'}</span>
                 </div>
             `;
@@ -379,23 +376,185 @@ class AnalysisApp {
         tryLoadMolecule();
     }
 
-    populateAdmetResults() {
-        const container = document.getElementById('admetGrid');
-        const { analysis } = this.currentResults;
-        
-        if (analysis && analysis.admet && analysis.admet.length > 0) {
-            container.innerHTML = analysis.admet.map(pred => `
-                <div class="property-item">
-                    <span class="property-label">${pred.property}</span>
-                    <span class="property-value">
-                        ${typeof pred.value === 'number' ? pred.value.toFixed(3) : pred.value}
-                        ${pred.unit || ''}
-                    </span>
-                </div>
-            `).join('');
-        } else {
-            document.getElementById('admetResults').style.display = 'none';
+    // ---- ADMET categorization ---------------------------------------
+    categorizeAdmet(propName) {
+        // Strip drugbank-percentile suffix so percentile rows share their parent's category.
+        const base = String(propName).replace(/_drugbank_approved_percentile$/i, '');
+
+        // Property pattern → category. Order matters: more specific first.
+        const buckets = [
+            ['toxicity',     /(hERG|AMES|DILI|LD50|Carcinogen|ClinTox|^Tox\d|Skin_?Reaction|Mutagen|alert|^NR[-_]|^SR[-_])/i],
+            ['metabolism',   /(CYP|metabol)/i],
+            ['excretion',    /(Half_Life|Clearance|excret)/i],
+            ['distribution', /(BBB|PPBR|VDss|distribution|plasma)/i],
+            ['absorption',   /(HIA|Pgp|Bioavailab|Caco2|Lipophilic|absorption|permeab|PAMPA|solubil|Hydration|Aqueous)/i],
+            ['physico',      /(molecular_weight|logP|TPSA|tpsa|hydrogen_bond|rotatable_bonds|stereo_centers|Lipinski|^QED$|fraction_csp3|num_rings|num_atoms|num_heavy_atoms|molar_refract|hba|hbd)/i],
+        ];
+        const labels = {
+            physico: 'Physico', absorption: 'Absorption', distribution: 'Distribution',
+            metabolism: 'Metabolism', excretion: 'Excretion', toxicity: 'Toxicity', other: 'Other',
+        };
+        for (const [id, rx] of buckets) {
+            if (rx.test(base)) return { id, label: labels[id] };
         }
+        return { id: 'other', label: 'Other' };
+    }
+
+    valueColor(pred) {
+        // Probability-style values (0..1, prob unit)
+        const v = pred.value;
+        if (typeof v !== 'number') return '';
+        const cat = this.categorizeAdmet(pred.property).id;
+        const isProb = (pred.unit === 'prob' || (v >= 0 && v <= 1 && /prob|probability|Score|Inhibit|Substrate|Carcinogen|Tox|Pgp|HIA|BBB|hERG|AMES|DILI/i.test(pred.property)));
+
+        if (isProb) {
+            // For toxicity-related, low = good
+            if (cat === 'toxicity') return v <= 0.3 ? 'good' : v <= 0.6 ? 'warning' : 'bad';
+            // For absorption / desirable, high = good
+            return v >= 0.7 ? 'good' : v >= 0.4 ? 'warning' : 'bad';
+        }
+        return '';
+    }
+
+    formatPropName(name) {
+        return String(name)
+            .replace(/_/g, ' ')
+            .replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    populateAdmetResults() {
+        const card  = document.getElementById('admetResults');
+        const tbody = document.querySelector('#admetTable tbody');
+        const empty = document.getElementById('admetEmpty');
+        const count = document.getElementById('admetCount');
+        const chips = document.getElementById('admetChips');
+        const filterInput = document.getElementById('admetFilter');
+        const { analysis } = this.currentResults;
+        const admet = (analysis && analysis.admet) || [];
+
+        if (!admet.length) {
+            card.style.display = 'none';
+            return;
+        }
+        card.style.display = '';
+
+        // Decorate each row with category info
+        const rows = admet.map(p => ({
+            ...p,
+            _cat: this.categorizeAdmet(p.property),
+            _color: this.valueColor(p),
+            _label: this.formatPropName(p.property),
+        }));
+
+        // Per-category counts
+        const cats = new Map();
+        rows.forEach(r => cats.set(r._cat.id, (cats.get(r._cat.id) || 0) + 1));
+        const catOrder = ['physico','absorption','distribution','metabolism','excretion','toxicity','other'];
+        const labelMap = {
+            physico:'Physico', absorption:'Absorption', distribution:'Distribution',
+            metabolism:'Metabolism', excretion:'Excretion', toxicity:'Toxicity', other:'Other',
+        };
+        chips.innerHTML = [
+            `<button class="admet-chip active" data-cat="all">All <span class="admet-chip-count">${rows.length}</span></button>`,
+            ...catOrder
+                .filter(c => cats.has(c))
+                .map(c => `<button class="admet-chip" data-cat="${c}">${labelMap[c]} <span class="admet-chip-count">${cats.get(c)}</span></button>`)
+        ].join('');
+
+        count.textContent = `${rows.length} properties`;
+
+        // State
+        let activeCat = 'all';
+        let activeFilter = '';
+        let sortKey = null;
+        let sortDir = 1;
+
+        const render = () => {
+            let view = rows.filter(r => {
+                if (activeCat !== 'all' && r._cat.id !== activeCat) return false;
+                if (activeFilter) {
+                    const hay = `${r.property} ${r._label} ${r.description || ''}`.toLowerCase();
+                    if (!hay.includes(activeFilter)) return false;
+                }
+                return true;
+            });
+
+            if (sortKey) {
+                view = [...view].sort((a, b) => {
+                    let va, vb;
+                    if (sortKey === 'category')      { va = a._cat.label; vb = b._cat.label; }
+                    else if (sortKey === 'property') { va = a._label;     vb = b._label;     }
+                    else if (sortKey === 'value')    { va = a.value;      vb = b.value;      }
+                    else if (sortKey === 'probability'){ va = a.probability ?? -Infinity; vb = b.probability ?? -Infinity; }
+                    if (typeof va === 'number' && typeof vb === 'number') return (va - vb) * sortDir;
+                    return String(va).localeCompare(String(vb)) * sortDir;
+                });
+            }
+
+            if (!view.length) {
+                tbody.innerHTML = '';
+                empty.classList.remove('hidden');
+                return;
+            }
+            empty.classList.add('hidden');
+
+            tbody.innerHTML = view.map(r => {
+                const val = typeof r.value === 'number'
+                    ? (Math.abs(r.value) >= 1000 ? r.value.toExponential(2) : r.value.toFixed(3))
+                    : r.value;
+                const prob = (typeof r.probability === 'number') ? r.probability : null;
+                const pct = prob !== null ? Math.round(Math.max(0, Math.min(1, prob)) * 100) : null;
+                const confCell = (pct !== null)
+                    ? `<div class="admet-conf">
+                           <div class="admet-conf-bar"><span style="width:${pct}%"></span></div>
+                           <span class="admet-conf-pct">${pct}%</span>
+                       </div>`
+                    : `<span class="admet-conf-empty">—</span>`;
+                return `
+                    <tr>
+                        <td><span class="admet-cat ${r._cat.id}">${r._cat.label}</span></td>
+                        <td>
+                            <div class="admet-prop-name">${r._label}</div>
+                            ${r.description ? `<div class="admet-prop-desc">${r.description}</div>` : ''}
+                        </td>
+                        <td class="num ${r._color}">${val}</td>
+                        <td><span class="admet-unit-cell">${r.unit || ''}</span></td>
+                        <td>${confCell}</td>
+                    </tr>
+                `;
+            }).join('');
+        };
+
+        // Wire chips
+        chips.querySelectorAll('.admet-chip').forEach(btn => {
+            btn.onclick = () => {
+                chips.querySelectorAll('.admet-chip').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeCat = btn.dataset.cat;
+                render();
+            };
+        });
+
+        // Wire filter
+        filterInput.value = '';
+        filterInput.oninput = (e) => {
+            activeFilter = e.target.value.trim().toLowerCase();
+            render();
+        };
+
+        // Wire column sort
+        document.querySelectorAll('#admetTable th[data-sort]').forEach(th => {
+            th.onclick = () => {
+                const key = th.dataset.sort;
+                if (sortKey === key) sortDir = -sortDir;
+                else { sortKey = key; sortDir = 1; }
+                document.querySelectorAll('#admetTable th').forEach(t => t.classList.remove('sort-asc','sort-desc'));
+                th.classList.add(sortDir === 1 ? 'sort-asc' : 'sort-desc');
+                render();
+            };
+        });
+
+        render();
     }
 
     resetAnalysis() {

@@ -1,15 +1,16 @@
+from typing import Optional
 from agno import tools
 from ..services.rdkit_utils import RDKitUtils
 from ..services.admet_ai_client import ADMETClient
 
 @tools.tool
-def rdkit_sanitize(smiles: str) -> dict:
+def rdkit_sanitize(smiles: Optional[str] = None) -> dict:
     """
     Sanitize and analyze a SMILES string to extract comprehensive molecular information.
-    
+
     Args:
         smiles: SMILES string to sanitize and analyze
-        
+
     Returns:
         Dictionary containing sanitized SMILES, molecular formula, weight, InChI, InChI key, and descriptors
     """
@@ -34,7 +35,7 @@ def rdkit_sanitize(smiles: str) -> dict:
         return {"error": f"Failed to process SMILES '{smiles}': {str(e)}"}
 
 @tools.tool
-def rdkit_conformer(smiles: str, forcefield: str = "UFF") -> dict:
+def rdkit_conformer(smiles: Optional[str] = None, forcefield: str = "UFF") -> dict:
     """
     Generate a 3D conformer for a molecule from its SMILES string.
     
@@ -72,7 +73,7 @@ def rdkit_conformer(smiles: str, forcefield: str = "UFF") -> dict:
         return {"error": f"Failed to generate conformer: {str(e)}", "status": "failed"}
 
 @tools.tool
-def admet_predict(smiles: str) -> dict:
+def admet_predict(smiles: Optional[str] = None) -> dict:
     """
     Predict ADMET properties for a molecule using admet-ai.
     

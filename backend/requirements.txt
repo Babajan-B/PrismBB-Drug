@@ -1,0 +1,30 @@
+# =====================================================================
+# Molecular Analytics Suite — backend runtime dependencies
+# Tested on Python 3.10 – 3.13 (Linux / macOS / Windows)
+# =====================================================================
+
+# ---- Web server ------------------------------------------------------
+fastapi>=0.112,<1.0
+uvicorn[standard]>=0.30,<1.0
+gunicorn>=22.0; sys_platform != "win32"     # Windows uses uvicorn directly
+pydantic>=2.7,<3.0
+python-multipart>=0.0.9
+typing-extensions>=4.9
+
+# ---- Cheminformatics & molecular analysis ----------------------------
+rdkit>=2024.3.1                              # Linux / macOS / Windows wheels
+biopython>=1.83
+meeko>=0.7.0                                 # PDB/SDF → PDBQT preparation
+gemmi>=0.6.5                                 # required by meeko 0.7+
+
+# ---- ADMET model ensemble --------------------------------------------
+admet-ai>=1.4.0                              # pulls torch + pytorch-lightning
+# Note: on first /api/admet call ~2 GB of model weights are downloaded
+# into $ADMET_AI_CACHE_DIR.
+
+# ---- LLM agent framework ---------------------------------------------
+agno>=2.0,<3.0                               # multi-agent orchestration
+
+# ---- HTTP / utilities ------------------------------------------------
+requests>=2.31
+python-dotenv>=1.0

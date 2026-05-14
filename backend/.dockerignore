@@ -1,0 +1,31 @@
+# --- Python build artefacts ---
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+htmlcov/
+.coverage*
+
+# --- Virtual envs (the host one is huge) ---
+venv/
+.venv/
+env/
+
+# --- Editor / OS junk ---
+.idea/
+.vscode/
+.DS_Store
+*.swp
+
+# --- Git / docs / tests we don't want in the image ---
+.git/
+.gitignore
+*.md
+tests/

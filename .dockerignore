@@ -1,0 +1,33 @@
+# Root .dockerignore — protects against accidentally copying parent context
+
+# Local virtualenv (the one in venv/ is ~3 GB)
+venv/
+.venv/
+
+# Node / build artefacts
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/
+
+# Python caches
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# OS / IDE
+.DS_Store
+.idea/
+.vscode/
+
+# Git
+.git/
+.gitignore
+
+# Docs / config not needed inside images
+*.md
+PRD.md
+QA_CHECKLIST.md
+LICENSE

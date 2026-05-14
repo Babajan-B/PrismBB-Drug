@@ -1,368 +1,228 @@
-﻿#  Molecular Analytics Suite - AI-Powered Drug Discovery Platform
+# PrismBB Drug — AI-Powered Drug Discovery Platform
 
-[![Python](https://img.shields.io/badge/Python-3.8%2B-blue.svg)](https://www.python.org/downloads/)
-[![FastAPI](https://img.shields.io/badge/FastAPI-0.104%2B-green.svg)](https://fastapi.tiangolo.com/)
-[![Flask](https://img.shields.io/badge/Flask-3.0%2B-lightgrey.svg)](https://flask.palletsprojects.com/)
-[![RDKit](https://img.shields.io/badge/RDKit-2023.09%2B-orange.svg)](https://www.rdkit.org/)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.112%2B-009688.svg)](https://fastapi.tiangolo.com/)
+[![RDKit](https://img.shields.io/badge/RDKit-2024%2B-orange.svg)](https://www.rdkit.org/)
+[![AutoDock Vina](https://img.shields.io/badge/AutoDock-Vina-7c5cff.svg)](https://vina.scripps.edu/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **A comprehensive molecular analysis platform featuring AI-powered agents, interactive 3D visualization, and advanced ADMET predictions for drug discovery and chemical research.**
-
-![Molecular Analytics Suite](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)
-
-##  Features
-
-###  **Core Analysis Capabilities**
-- **Molecular Parsing**: Complete SMILES analysis with 17+ molecular descriptors
-- **3D Structure Generation**: Automated conformer generation using UFF/MMFF force fields
-- **ADMET Predictions**: Comprehensive drug-like property analysis
-- **Interactive 3D Visualization**: Real-time molecular structure viewing with 3Dmol.js
-
-###  **AI-Powered Agent Architecture**
-- **ParserAgent**: RDKit-based molecular parsing and descriptor calculation
-- **ConformerAgent**: 3D structure generation with multiple force field support
-- **ADMETAgent**: Advanced ADMET property predictions using admet-ai
-- **RenderAgent**: Intelligent payload formatting and analysis structuring
-
-###  **Multi-Format File Support**
-- **SMILES Input**: Direct molecular notation input
-- **File Upload**: Support for SDF, PDB, MOL, XYZ formats
-- **Drag & Drop**: Modern file upload interface
-- **Direct PDB Visualization**: Immediate 3D rendering of uploaded structures
-
-###  **Interactive Web Interface**
-- **Real-time Analysis**: Live molecular property calculation
-- **3D Molecular Viewer**: Interactive structure visualization with multiple rendering styles
-- **Responsive Design**: Modern, clean UI optimized for research workflows
-- **Progress Tracking**: Visual feedback for analysis pipeline stages
-
-##  Quick Start
-
-### Prerequisites
-- Python 3.8+
-- Git
-
-###  Installation
-
-1. **Clone the Repository**
-`ash
-git clone https://github.com/jaannawaz/Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform.git
-cd Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform
-`
-
-2. **Backend Setup**
-`ash
-cd backend
-python -m pip install --upgrade pip
-pip install -e .
-pip install rdkit admet-ai  # Optional: for enhanced functionality
-`
-
-3. **Frontend Setup**
-`ash
-cd flask_frontend
-pip install -r requirements.txt
-`
-
-4. **Environment Configuration**
-`ash
-# Optional: Set GROQ API key for enhanced AI features
-export GROQ_API_KEY="your-groq-api-key-here"
-`
-
-###  Running the Application
-
-** Quick Start - Full Stack (Recommended)**
-
-**Step 1: Start the Backend API Server**
-`ash
-# Open Terminal/Command Prompt 1
-cd backend
-uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
-`
- **Backend will be available at**: http://localhost:8000
- **API Documentation**: http://localhost:8000/docs
-
-**Step 2: Start the Frontend Web Server**
-`ash
-# Open Terminal/Command Prompt 2 (new window)
-cd flask_frontend
-python app.py
-`
- **Web Application will be available at**: http://localhost:3000
-
-** Development Mode (Backend Only)**
-`ash
-# For API development and testing
-cd backend
-uvicorn app.main:app --reload
-`
-
-** Important Notes:**
-- Keep both servers running simultaneously for full functionality
-- Backend must be running before starting the frontend
-- If you get port conflicts, change the ports in the commands above
-- For Windows users, use python instead of python3
-
-###  Access Points
-- **Web Application**: http://localhost:3000
-- **API Documentation**: http://localhost:8000/docs
-- **Health Check**: http://localhost:8000/api/health
-
-##  API Endpoints
-
-| Endpoint | Method | Description | Input | Output |
-|----------|--------|-------------|-------|--------|
-| /api/health | GET | System status and agent information | - | System health data |
-| /api/parse | POST | Molecular parsing and descriptor calculation | SMILES string | Molecular properties |
-| /api/conformer | POST | 3D structure generation | SMILES + force field | PDB block |
-| /api/admet | POST | ADMET property predictions | SMILES string | Drug-like properties |
-| /api/analyze | POST | Complete molecular analysis | SMILES string | Full analysis report |
-| /api/render | POST | Analysis payload formatting | Analysis data | Structured results |
-
-##  Usage Examples
-
-### Command Line API Testing
-`ash
-# Test molecular parsing
-curl -X POST "http://localhost:8000/api/parse" \
-     -H "Content-Type: application/json" \
-     -d '{"smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"}'
-
-# Test 3D conformer generation
-curl -X POST "http://localhost:8000/api/conformer" \
-     -H "Content-Type: application/json" \
-     -d '{"smiles": "CC(=O)OC1=CC=CC=C1C(=O)O", "forcefield": "UFF"}'
-
-# Test complete analysis
-curl -X POST "http://localhost:8000/api/analyze" \
-     -H "Content-Type: application/json" \
-     -d '{"smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"}'
-`
-
-### Python Integration
-`python
-import requests
-
-# Parse molecular properties
-response = requests.post("http://localhost:8000/api/parse", 
-                        json={"smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"})
-data = response.json()
-print(f"Molecular Weight: {data['weight']}")
-
-# Generate 3D structure
-response = requests.post("http://localhost:8000/api/conformer",
-                        json={"smiles": "CC(=O)OC1=CC=CC=C1C(=O)O"})
-pdb_data = response.json()['pdb_block']
-`
-
-### Web Interface Usage
-1. **Open** http://localhost:3000 in your browser
-2. **Enter SMILES** or **upload molecular file** (SDF, PDB, MOL, XYZ)
-3. **Click "Analyze Molecule"** to start the analysis
-4. **View results** including 3D structure, descriptors, and ADMET predictions
-5. **Interact** with the 3D viewer using mouse controls
-
-##  Architecture
-
-### Backend Architecture
-`
-        
-   FastAPI App      AI Agents        RDKit Tools   
-   (Port 8000)          (Agno)               (Cheminfo)    
-        
-                                                       
-                                     
-           ADMET-AI API   
-                          (Predictions)  
-                        
-`
-
-### Frontend Architecture
-`
-        
-   Flask App        Static Files     3Dmol.js      
-   (Port 3000)          (CSS/JS)             (Visualization)
-        
-         
-         
-
-   API Proxy     
-   (Backend)     
-
-`
-
-##  Molecular Descriptors
-
-| Descriptor | Description | Units | Range |
-|------------|-------------|-------|-------|
-| **Molecular Weight** | Total molecular mass | Da | 18-2000 |
-| **LogP** | Lipophilicity | - | -2 to 6 |
-| **HBD** | Hydrogen bond donors | count | 0-10 |
-| **HBA** | Hydrogen bond acceptors | count | 0-20 |
-| **TPSA** | Topological polar surface area | Ų | 0-200 |
-| **Rotatable Bonds** | Flexible bond count | count | 0-15 |
-| **Aromatic Rings** | Aromatic ring count | count | 0-10 |
-| **Heavy Atoms** | Non-hydrogen atoms | count | 1-100 |
-| **Lipinski Violations** | Rule of 5 violations | count | 0-4 |
-| **Fraction Csp3** | Saturated carbon ratio | - | 0-1 |
-| **Bertz CT** | Molecular complexity | - | 0-1000 |
-| **Balaban J** | Topological index | - | 0-10 |
-| **SlogP_VSA0** | LogP surface area | - | 0-100 |
-
-##  3D Visualization Features
-
-### Interactive Controls
-- **Mouse Controls**: Rotate, zoom, pan with mouse/trackpad
-- **Rendering Styles**: Stick, sphere, cartoon, surface representations
-- **Auto-rotation**: Continuous 3D structure rotation
-- **Reset View**: Return to default orientation
-- **Fullscreen**: Expand viewer to full screen
-
-### Supported Formats
-- **Input**: SMILES, SDF, PDB, MOL, XYZ
-- **Output**: PDB format for 3D visualization
-- **Force Fields**: UFF (Universal Force Field), MMFF (Merck Molecular Force Field)
-
-##  ADMET Predictions
-
-### Absorption
-- **Caco-2 Permeability**: Intestinal absorption prediction
-- **HIA (Human Intestinal Absorption)**: Oral bioavailability
-- **Pgp Substrate**: P-glycoprotein interaction
-
-### Distribution
-- **VD (Volume of Distribution)**: Tissue distribution
-- **BBB (Blood-Brain Barrier)**: CNS penetration
-- **PPB (Plasma Protein Binding)**: Protein binding affinity
-
-### Metabolism
-- **CYP1A2 Inhibition**: Drug-drug interaction risk
-- **CYP2C19 Inhibition**: Metabolic pathway analysis
-- **CYP2C9 Inhibition**: Enzyme interaction prediction
-- **CYP2D6 Inhibition**: Pharmacogenomics consideration
-- **CYP3A4 Inhibition**: Major metabolic pathway
-
-### Excretion
-- **CL (Clearance)**: Drug elimination rate
-- **T1/2 (Half-life)**: Drug persistence in body
-
-### Toxicity
-- **hERG Inhibition**: Cardiac toxicity risk
-- **Hepatotoxicity**: Liver damage potential
-- **Ames Mutagenicity**: Genotoxicity assessment
-- **Carcinogenicity**: Cancer risk evaluation
-
-##  Development
-
-### Project Structure
-`
-molecular-analytics-suite/
- backend/                 # FastAPI backend
-    app/
-       agents/         # AI agents (Parser, Conformer, ADMET, Render)
-       routes/         # API endpoints
-       services/       # RDKit and ADMET utilities
-       models/         # Data schemas
-    tests/              # Backend tests
- flask_frontend/         # Flask web interface
-    templates/          # HTML templates
-    static/             # CSS, JavaScript, assets
-    app.py              # Flask application
- frontend/               # React frontend (legacy)
- docs/                   # Documentation
-`
-
-### Running Tests
-`ash
-# Backend tests
-cd backend
-python -m pytest tests/ -v
-
-# Frontend tests (if using React)
-cd frontend
-npm test
-`
-
-### Code Quality
-`ash
-# Format code
-black backend/
-isort backend/
-
-# Type checking
-mypy backend/
-
-# Linting
-flake8 backend/
-`
-
-##  Deployment
-
-### Docker Deployment
-`ash
-# Build and run with Docker Compose
-docker-compose up --build
-`
-
-### Production Setup
-`ash
-# Install production dependencies
-pip install gunicorn
-
-# Run production server
-gunicorn -w 4 -k uvicorn.workers.UvicornWorker app.main:app
-`
-
-### Environment Variables
-`ash
-# Required
-GROQ_API_KEY=your-groq-api-key
-
-# Optional
-BACKEND_HOST=0.0.0.0
-BACKEND_PORT=8000
-FRONTEND_PORT=3000
-DEBUG=False
-`
-
-##  Contributing
-
-We welcome contributions! Please see our [Contributing Guidelines](CONTRIBUTING.md) for details.
-
-### Development Workflow
-1. Fork the repository
-2. Create a feature branch (git checkout -b feature/amazing-feature)
-3. Commit your changes (git commit -m 'Add amazing feature')
-4. Push to the branch (git push origin feature/amazing-feature)
-5. Open a Pull Request
-
-### Reporting Issues
-- Use GitHub Issues for bug reports
-- Include detailed reproduction steps
-- Attach relevant log files and screenshots
-
-##  License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-##  Acknowledgments
-
-- **RDKit**: Open-source cheminformatics toolkit
-- **3Dmol.js**: WebGL-based molecular visualization
-- **ADMET-AI**: Advanced ADMET prediction models
-- **FastAPI**: Modern Python web framework
-- **Agno**: AI agent framework for Python
-
-##  Support
-
-- **Issues**: [GitHub Issues](https://github.com/jaannawaz/Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/jaannawaz/Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform/discussions)
-- **Documentation**: [Wiki](https://github.com/jaannawaz/Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform/wiki)
+> **PrismBB Drug** is a complete computational-chemistry workbench: SMILES
+> parsing, 17+ molecular descriptors, 3D conformer generation, **104 ADMET
+> predictions**, and full **AutoDock Vina protein-ligand docking** — all
+> behind a multi-agent FastAPI backend and a modern Flask UI.
+
+![architecture](https://img.shields.io/badge/Architecture-Multi--Agent-success)
+![cross-platform](https://img.shields.io/badge/OS-Linux%20%7C%20macOS%20%7C%20Windows-informational)
 
 ---
 
-**Built with  for the computational chemistry and drug discovery community.**
+## Features
 
-[![GitHub stars](https://img.shields.io/github/stars/jaannawaz/Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform?style=social)](https://github.com/jaannawaz/Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform)
-[![GitHub forks](https://img.shields.io/github/forks/jaannawaz/Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform?style=social)](https://github.com/jaannawaz/Molecular-Analytics-Suite---AI-Powered-Drug-Discovery-Platform)
+### Molecular analysis
+- **SMILES parser** — sanitization, InChI, InChIKey, formula
+- **17+ descriptors** — LogP, TPSA, HBD/HBA, rotatable bonds, Lipinski, …
+- **3D conformer generation** — UFF / MMFF force fields
+- **104 ADMET predictions** — absorption, distribution, metabolism, excretion, toxicity (via [admet-ai](https://github.com/swansonk14/admet_ai))
+- **Interactive 3D viewer** — powered by 3Dmol.js (WebGL)
+
+### Molecular docking
+- **PDBQT conversion** — PDB / SDF → PDBQT using Meeko + RDKit
+- **AutoDock Vina docking** — protein-ligand with grid box, exhaustiveness, scoring function
+- **Pose visualization** — receptor cartoon + docked ligand sticks
+- **Stub fallback** — full UI still works if the Vina binary isn't installed (synthetic results)
+
+### Multi-agent backend
+Four cooperating Agno agents — each falls back to direct library calls
+when no `GROQ_API_KEY` is set, so everything runs offline:
+- **ParserAgent** — RDKit-based molecular parsing
+- **ConformerAgent** — 3D structure generation
+- **ADMETAgent** — ADMET predictions
+- **RenderAgent** — payload aggregation
+
+---
+
+## Quick start
+
+### Option 1 — Docker (any OS, one command)
+
+```bash
+git clone https://github.com/Babajan-B/PrismBB-Drug.git
+cd PrismBB-Drug
+docker compose up --build
+```
+
+Open **<http://localhost:3000>** — the UI; backend API is on `:8000`.
+
+> First build takes ~10 min (PyTorch + admet-ai). Subsequent runs are seconds.
+> Model weights persist in a Docker volume across restarts.
+
+### Option 2 — Native install
+
+#### Linux / macOS
+
+```bash
+git clone https://github.com/Babajan-B/PrismBB-Drug.git
+cd PrismBB-Drug
+bash scripts/setup.sh           # creates venv + installs all deps
+bash scripts/run.sh             # starts backend + UI
+```
+
+#### Windows (PowerShell)
+
+```powershell
+git clone https://github.com/Babajan-B/PrismBB-Drug.git
+cd PrismBB-Drug
+.\scripts\setup.ps1             # creates venv + installs all deps
+.\scripts\run.ps1               # starts backend + UI
+```
+
+The setup script will tell you whether AutoDock Vina is on your PATH.
+**The full app works without Vina** — docking just runs in stub mode.
+
+---
+
+## Manual install (no scripts)
+
+If you'd rather run the pip commands yourself:
+
+```bash
+# 1. Python 3.10+
+python --version
+
+# 2. Create venv
+python -m venv venv
+source venv/bin/activate                # Linux/macOS
+# .\venv\Scripts\Activate.ps1           # Windows PowerShell
+
+# 3. Install everything (~3 GB; PyTorch + admet-ai are large)
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# 4. Run backend (terminal #1)
+cd backend
+uvicorn app.main:app --reload --port 8000
+
+# 5. Run UI (terminal #2)
+cd flask_frontend
+python app.py
+```
+
+---
+
+## Installing AutoDock Vina (optional — for real docking)
+
+Without Vina the docking workbench works but produces synthetic affinities.
+The backend auto-detects the binary on startup — **no code change needed**.
+
+| OS | Install command | Notes |
+|---|---|---|
+| **Ubuntu / Debian** | `sudo apt-get install autodock-vina` | Ships Vina 1.1 |
+| **Fedora / RHEL** | `sudo dnf install autodock-vina` | |
+| **macOS (Homebrew)** | `brew install autodock-vina` | |
+| **macOS / Linux (manual)** | Download from <https://vina.scripps.edu/downloads/>, extract, add to `PATH` | |
+| **Windows** | Download zip from <https://vina.scripps.edu/downloads/>, extract, add the folder containing `vina.exe` to `PATH` | |
+
+Verify with:
+```bash
+vina --version
+```
+
+For Vina 1.2.x (recommended over 1.1), build from source or use a prebuilt
+Docker image such as `ccsbk/autodock-vina:1.2.5`.
+
+---
+
+## Application URLs
+
+| URL | What |
+|---|---|
+| <http://localhost:3000/> | Analyze (SMILES → descriptors + 3D + ADMET) |
+| <http://localhost:3000/docking> | Molecular docking workbench |
+| <http://localhost:3000/examples> | Curated example molecules |
+| <http://localhost:3000/about> | Architecture overview |
+| <http://localhost:8000/api/health> | Backend health |
+| <http://localhost:8000/api/docking/health> | Docking capabilities + engine mode |
+| <http://localhost:8000/docs> | Auto-generated Swagger UI |
+
+---
+
+## Testing
+
+```bash
+cd backend
+pip install -r requirements-dev.txt
+pytest -v
+```
+
+30 smoke tests cover RDKit utilities, agent toolkit, parser/conformer agents, and parametrized molecule examples.
+
+---
+
+## Project layout
+
+```
+.
+├── backend/                      FastAPI + agents + services
+│   ├── app/
+│   │   ├── agents/               4 Agno agents + toolkit
+│   │   ├── routes/               molecules.py, docking.py
+│   │   ├── services/             rdkit_utils.py, molecular_docking.py, admet_ai_client.py
+│   │   ├── models/schemas.py     pydantic models
+│   │   └── main.py
+│   ├── tests/test_smoke.py       30 tests
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── requirements-dev.txt
+│
+├── flask_frontend/               Jinja templates + vanilla JS UI
+│   ├── app.py                    Flask app + proxy routes
+│   ├── templates/                base, index, docking, examples, about
+│   ├── static/css/style.css      v2 design system
+│   ├── static/js/                main, analysis, docking, file-upload, viewer
+│   ├── Dockerfile
+│   └── requirements.txt
+│
+├── scripts/                      Cross-platform helpers
+│   ├── setup.sh   setup.ps1      install dependencies
+│   └── run.sh     run.ps1        launch backend + UI
+│
+├── docker-compose.yml
+├── render.yaml                   One-click Render Blueprint
+├── requirements.txt              Combined backend + frontend
+├── DEPLOY.md                     Deployment guide (Docker / Render / Fly / etc.)
+└── README.md
+```
+
+---
+
+## Environment variables
+
+| Variable | Default | Purpose |
+|---|---|---|
+| `PORT` | `8000` / `3000` | Listen port (Render/Heroku inject this) |
+| `BACKEND_URL` | `http://localhost:8000` | Where Flask proxies API calls |
+| `GROQ_API_KEY` | _unset_ | Enable real Agno LLM agents (otherwise direct-library fallback) |
+| `AGNO_TELEMETRY` | `false` | Disable Agno telemetry |
+| `ADMET_AI_CACHE_DIR` | `/data/admet_ai` | Where torch model weights are cached |
+| `HF_HOME` | `/data/huggingface` | HuggingFace transformers cache |
+| `WEB_CONCURRENCY` | `1` (backend) / `2` (frontend) | Gunicorn worker count |
+| `SECRET_KEY` | dev value | Flask session signing |
+
+Copy `.env.example` → `.env` and edit as needed (picked up by Docker Compose).
+
+---
+
+## Deployment
+
+See **[DEPLOY.md](DEPLOY.md)** for full guides for:
+- Local Docker
+- **Render.com** (one-click Blueprint via `render.yaml`)
+- Fly.io
+- Railway
+- Google Cloud Run
+
+---
+
+## License
+
+[MIT](LICENSE) — see file for details.

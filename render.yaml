@@ -1,0 +1,70 @@
+# ============================================================================
+# PrismBB Drug — Render Blueprint (one-click deploy)
+#
+#   Two services:
+#     • prismbb-backend  — FastAPI + RDKit + ADMET-AI + AutoDock Vina
+#     • prismbb-frontend — Flask UI that proxies to the backend
+#
+# Notes
+#   • IMPORTANT: pick at least the "starter" plan for the backend.
+#     The free plan gives 512 MB RAM, but admet-ai loads ~2 GB of model
+#     weights on first call and the container will OOM. 'standard'
+#     (2 GB) is safest.
+#   • A 5 GB disk is mounted at /data for the ADMET-AI / HuggingFace cache
+#     so the models aren't re-downloaded on every redeploy.
+#   • The frontend reaches the backend through the *internal* Render URL.
+# ============================================================================
+services:
+  - type: web
+    name: prismbb-backend
+    runtime: docker
+    repo: https://github.com/Babajan-B/PrismBB-Drug.git
+    branch: main
+    rootDir: backend
+    dockerfilePath: ./Dockerfile
+    plan: standard            # bump to 'pro' if you expect concurrent docking jobs
+    region: oregon            # change to your nearest region
+    healthCheckPath: /api/health
+    autoDeploy: true
+    disk:
+      name: admet-cache
+      mountPath: /data
+      sizeGB: 5
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: WEB_CONCURRENCY
+        value: "1"
+      - key: AGNO_TELEMETRY
+        value: "false"
+      - key: ADMET_AI_CACHE_DIR
+        value: /data/admet_ai
+      - key: HF_HOME
+        value: /data/huggingface
+      # Optional — set in the Render dashboard (Environment tab) if you want
+      # real LLM agents instead of the RDKit/ADMET-AI fallback paths.
+      - key: GROQ_API_KEY
+        sync: false
+
+  - type: web
+    name: prismbb-frontend
+    runtime: docker
+    repo: https://github.com/Babajan-B/PrismBB-Drug.git
+    branch: main
+    rootDir: flask_frontend
+    dockerfilePath: ./Dockerfile
+    plan: starter
+    region: oregon
+    healthCheckPath: /
+    autoDeploy: true
+    envVars:
+      - key: PORT
+        value: 3000
+      - key: WEB_CONCURRENCY
+        value: "2"
+      # Internal service-to-service URL (Render injects DNS for `name` above)
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: prismbb-backend
+          property: hostport

@@ -1,84 +1,103 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Molecular Analytics Suite{% endblock %}</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <meta name="description" content="PrismBB Drug — AI-powered molecular analytics, ADMET prediction, protein-ligand docking, and 3D visualization." />
+    <meta name="theme-color" content="#0b0d12" />
+    <title>{% block title %}PrismBB Drug{% endblock %}</title>
+
+    <!-- Preconnect & modern font stack -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
     <!-- 3Dmol.js for molecular visualization -->
     <script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
+
+    <!-- Tiny FOUC-safe theme bootstrap -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('mas-theme') || 'dark';
+          document.documentElement.setAttribute('data-theme', t);
+        } catch(e) {}
+      })();
+    </script>
+
     {% block head %}{% endblock %}
 </head>
 <body>
-    <!-- Header -->
     <header class="header">
         <div class="container">
             <div class="header-content">
                 <div class="logo">
-                    <div class="logo-icon">🧬</div>
+                    <div class="logo-icon" aria-hidden="true">⚛︎</div>
                     <div class="logo-text">
-                        <h1><a href="{{ url_for('index') }}">Molecular Analytics Suite</a></h1>
-                        <p>Powered by RDKit & AI Agents</p>
+                        <h1><a href="{{ url_for('index') }}">PrismBB Drug</a></h1>
+                        <p>AI-Powered Drug Discovery</p>
                     </div>
                 </div>
-                <nav class="nav">
-                    <a href="{{ url_for('index') }}" class="nav-link">🔬 Analyze</a>
-                    <a href="{{ url_for('examples') }}" class="nav-link">🧪 Examples</a>
-                    <a href="{{ url_for('about') }}" class="nav-link">ℹ️ About</a>
-                    <div class="status-indicator" id="backendStatus">
+                <nav class="nav" aria-label="Primary">
+                    <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Analyze</a>
+                    <a href="{{ url_for('docking_page') }}" class="nav-link {% if request.endpoint == 'docking_page' %}active{% endif %}">Docking</a>
+                    <a href="{{ url_for('examples') }}" class="nav-link {% if request.endpoint == 'examples' %}active{% endif %}">Examples</a>
+                    <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active{% endif %}">About</a>
+
+                    <div class="status-indicator" id="backendStatus" title="Backend status">
                         <span class="status-dot"></span>
-                        <span class="status-text">Checking...</span>
+                        <span class="status-text">Checking…</span>
                     </div>
+
+                    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme" title="Toggle theme">
+                        <span aria-hidden="true" id="themeIcon">☾</span>
+                    </button>
                 </nav>
             </div>
         </div>
     </header>
 
-    <!-- Main Content -->
     <main class="main">
         <div class="container">
             {% block content %}{% endblock %}
         </div>
     </main>
 
-    <!-- Footer -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">
                 <div class="footer-section">
-                    <h3>🧬 Technology Stack</h3>
+                    <h3>Technology</h3>
                     <ul>
-                        <li>• <strong>Backend:</strong> FastAPI + Agno AI Agents</li>
-                        <li>• <strong>Chemistry:</strong> RDKit Molecular Analysis</li>
-                        <li>• <strong>Frontend:</strong> Flask + Vanilla JS</li>
-                        <li>• <strong>AI:</strong> Groq LLaMA 3.1 70B</li>
+                        <li><strong>Backend</strong> — FastAPI · Agno Agents</li>
+                        <li><strong>Chemistry</strong> — RDKit + ADMET-AI</li>
+                        <li><strong>Frontend</strong> — Flask · ES Modules</li>
+                        <li><strong>3D</strong> — 3Dmol.js (WebGL)</li>
                     </ul>
                 </div>
                 <div class="footer-section">
-                    <h3>🔬 Features</h3>
+                    <h3>Capabilities</h3>
                     <ul>
-                        <li>• SMILES Parsing & Validation</li>
-                        <li>• 17+ Molecular Descriptors</li>
-                        <li>• 3D Conformer Generation</li>
-                        <li>• ADMET Predictions</li>
+                        <li>SMILES parsing &amp; validation</li>
+                        <li>17+ molecular descriptors</li>
+                        <li>UFF / MMFF conformer generation</li>
+                        <li>ADMET property prediction</li>
                     </ul>
                 </div>
                 <div class="footer-section">
-                    <h3>📊 Analysis Capabilities</h3>
+                    <h3>Drug-likeness</h3>
                     <ul>
-                        <li>• Lipinski Rule of Five</li>
-                        <li>• Drug-like Properties</li>
-                        <li>• Molecular Complexity</li>
-                        <li>• Pharmacokinetic Properties</li>
+                        <li>Lipinski Rule of Five</li>
+                        <li>Topological polar surface</li>
+                        <li>Rotatable-bond complexity</li>
+                        <li>Pharmacokinetic estimates</li>
                     </ul>
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>&copy; 2024 Molecular Analytics Suite. Built with ❤️ for computational chemistry.</p>
+                <p>© 2026 PrismBB Drug — Built for computational chemistry &amp; drug discovery research.</p>
             </div>
         </div>
     </footer>
@@ -86,4 +105,4 @@
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
     {% block scripts %}{% endblock %}
 </body>
-</html> 
+</html>

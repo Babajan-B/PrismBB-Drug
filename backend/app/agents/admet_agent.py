@@ -22,6 +22,5 @@ admet_agent = Agent(
         "Provide realistic confidence scores based on the prediction model's reliability for each property."
     ],
     markdown=False,
-    show_tool_calls=False,
     debug_mode=False
 ) 

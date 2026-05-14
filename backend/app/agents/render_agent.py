@@ -22,6 +22,5 @@ render_agent = Agent(
         "Calculate overall analysis success rates and provide meaningful summaries."
     ],
     markdown=False,
-    show_tool_calls=False,
     debug_mode=False
 ) 

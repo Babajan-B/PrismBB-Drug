@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Examples · {{ super() }}{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <span class="badge">CURATED LIBRARY</span>
+    <h1>Example <span class="accent">Molecules</span></h1>
+    <p>Click any card to analyze its SMILES through the full multi-agent pipeline.</p>
+</section>
+
+<div class="card">
+    <div class="examples-list">
+        {% for ex in examples %}
+        <a class="example-card" href="{{ url_for('index') }}?smiles={{ ex.smiles | urlencode }}">
+            <div class="example-name">{{ ex.name }}</div>
+            <div class="example-description">{{ ex.description }}</div>
+            <div class="example-smiles">{{ ex.smiles }}</div>
+        </a>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
