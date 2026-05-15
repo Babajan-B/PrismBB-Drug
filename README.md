@@ -6,82 +6,98 @@
 [![RDKit](https://img.shields.io/badge/RDKit-2024%2B-orange.svg)](https://www.rdkit.org/)
 [![AutoDock Vina](https://img.shields.io/badge/AutoDock-Vina-7c5cff.svg)](https://vina.scripps.edu/)
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Architecture](https://img.shields.io/badge/Architecture-Multi--Agent-success)](https://github.com/Babajan-B/PrismBB-Drug)
+[![OS](https://img.shields.io/badge/OS-Linux%20%7C%20macOS%20%7C%20Windows-informational)](https://github.com/Babajan-B/PrismBB-Drug)
 
-> **PrismBB Drug** is a complete computational-chemistry workbench: SMILES
-> parsing, 17+ molecular descriptors, 3D conformer generation, **104 ADMET
-> predictions**, and full **AutoDock Vina protein-ligand docking** — all
-> behind a multi-agent FastAPI backend and a modern Flask UI.
-
-![architecture](https://img.shields.io/badge/Architecture-Multi--Agent-success)
-![cross-platform](https://img.shields.io/badge/OS-Linux%20%7C%20macOS%20%7C%20Windows-informational)
+> **PrismBB Drug** is a complete computational-chemistry workbench you can run in your browser — no installation required.
+> It combines **SMILES parsing**, **17+ molecular descriptors**, **3D conformer generation**, **104 ADMET predictions**,
+> and full **AutoDock Vina protein-ligand docking**, all orchestrated by a four-agent FastAPI backend and served through a modern dark-mode Flask UI.
 
 ---
 
-## 🚀 Try it in your browser — no install (recommended for new users)
+## Try it now — no install needed
+
+**The easiest way to use PrismBB Drug is directly in Google Colab.** No setup, no Python environment, free GPU.
 
 [**👉 Open PrismBB Drug in Google Colab**](https://colab.research.google.com/github/Babajan-B/PrismBB-Drug/blob/main/colab/PrismBB_Drug.ipynb)
 
-Zero installation. Free GPU. Real AutoDock Vina docking.
+1. Click the badge above (or the link)
+2. In Colab: `Runtime` → **`Run all`** (or `Ctrl+F9` / `⌘F9`)
+3. Wait ~3 minutes while everything installs
+4. Click the big **"Open the app"** button that appears
+5. Use PrismBB Drug in your browser — share the URL with anyone
 
-1. Click the badge above
-2. In Colab, click **`Runtime` → `Run all`** (`Ctrl+F9` / `⌘F9`)
-3. After ~3 minutes a big purple **"Open the app"** button appears — click it
-4. Use PrismBB Drug in your browser
-
-> The notebook gives you a temporary public URL you can share with others.
-> For a permanent URL or production use, see the [installation options](#quick-start) below or [`DEPLOY.md`](DEPLOY.md).
+> The notebook creates a temporary public URL via Cloudflare Tunnel.
+> For a permanent URL, see the [deployment options](#deployment) below.
 
 ---
 
-## Features
+## What you can do
 
-### Molecular analysis
-- **SMILES parser** — sanitization, InChI, InChIKey, formula
-- **17+ descriptors** — LogP, TPSA, HBD/HBA, rotatable bonds, Lipinski, …
-- **3D conformer generation** — UFF / MMFF force fields
-- **104 ADMET predictions** — absorption, distribution, metabolism, excretion, toxicity (via [admet-ai](https://github.com/swansonk14/admet_ai))
-- **Interactive 3D viewer** — powered by 3Dmol.js (WebGL)
+### Molecular Analysis
+| Capability | Details |
+|---|---|
+| **SMILES parsing** | Sanitization, InChI, InChIKey, molecular formula |
+| **17+ descriptors** | LogP, TPSA, HBD/HBA, rotatable bonds, Lipinski violations, Bertz CT, … |
+| **3D conformer** | UFF and MMFF force-field geometry optimization |
+| **104 ADMET predictions** | Absorption, Distribution, Metabolism, Excretion, Toxicity via [admet-ai](https://github.com/swansonk14/admet_ai) |
+| **Interactive 3D viewer** | WebGL molecular visualization powered by 3Dmol.js |
 
-### Molecular docking
-- **PDBQT conversion** — PDB / SDF → PDBQT using Meeko + RDKit
-- **AutoDock Vina docking** — protein-ligand with grid box, exhaustiveness, scoring function
-- **Pose visualization** — receptor cartoon + docked ligand sticks
-- **Stub fallback** — full UI still works if the Vina binary isn't installed (synthetic results)
+### Molecular Docking
+| Capability | Details |
+|---|---|
+| **File conversion** | PDB / SDF → PDBQT using Meeko + RDKit |
+| **AutoDock Vina** | Real protein-ligand docking with grid box, exhaustiveness, scoring function selection |
+| **Pose viewer** | Receptor cartoon + docked ligand in 3D |
+| **Stub mode** | Full UI with synthetic results when Vina binary is absent — no broken screens |
 
-### Multi-agent backend
-Four cooperating Agno agents — each falls back to direct library calls
-when no `GROQ_API_KEY` is set, so everything runs offline:
-- **ParserAgent** — RDKit-based molecular parsing
-- **ConformerAgent** — 3D structure generation
-- **ADMETAgent** — ADMET predictions
-- **RenderAgent** — payload aggregation
+### Multi-Agent Backend
+Four cooperating [Agno](https://github.com/agno-agi/agno) agents with direct-library fallbacks (works fully offline, no `GROQ_API_KEY` required):
+
+| Agent | Role |
+|---|---|
+| **ParserAgent** | RDKit-based molecular parsing and descriptor calculation |
+| **ConformerAgent** | 3D structure generation |
+| **ADMETAgent** | ADMET property predictions |
+| **RenderAgent** | Payload aggregation and response formatting |
 
 ---
 
 ## Quick start
 
-### Option 1 — Docker (any OS, one command)
+### Option A — Google Colab (zero install, recommended for new users)
+
+See the [Try it now](#try-it-now--no-install-needed) section above.
+
+### Option B — Docker (any OS, one command)
 
 ```bash
 git clone https://github.com/Babajan-B/PrismBB-Drug.git
 cd PrismBB-Drug
+
+# Optional: copy .env.example → .env and add GROQ_API_KEY for real LLM agents
+cp .env.example .env
+
 docker compose up --build
 ```
 
-Open **<http://localhost:3000>** — the UI; backend API is on `:8000`.
+Open:
+- **UI** → <http://localhost:3000>
+- **API docs** → <http://localhost:8000/docs>
+- **Docking workbench** → <http://localhost:3000/docking>
 
-> First build takes ~10 min (PyTorch + admet-ai). Subsequent runs are seconds.
-> Model weights persist in a Docker volume across restarts.
+> First build downloads ~3 GB (PyTorch + admet-ai). Subsequent runs start in seconds.
+> Model weights are cached in a Docker volume and persist across restarts.
 
-### Option 2 — Native install
+### Option C — Native install
 
 #### Linux / macOS
 
 ```bash
 git clone https://github.com/Babajan-B/PrismBB-Drug.git
 cd PrismBB-Drug
-bash scripts/setup.sh           # creates venv + installs all deps
-bash scripts/run.sh             # starts backend + UI
+bash scripts/setup.sh    # creates venv, installs all deps, checks for Vina
+bash scripts/run.sh      # starts backend on :8000 + UI on :3000
 ```
 
 #### Windows (PowerShell)
@@ -89,63 +105,60 @@ bash scripts/run.sh             # starts backend + UI
 ```powershell
 git clone https://github.com/Babajan-B/PrismBB-Drug.git
 cd PrismBB-Drug
-.\scripts\setup.ps1             # creates venv + installs all deps
-.\scripts\run.ps1               # starts backend + UI
+.\scripts\setup.ps1      # creates venv, installs all deps, checks for Vina
+.\scripts\run.ps1        # starts backend on :8000 + UI on :3000
 ```
 
-The setup script will tell you whether AutoDock Vina is on your PATH.
-**The full app works without Vina** — docking just runs in stub mode.
+The setup script tells you whether AutoDock Vina is on your PATH.
+**The full app works without Vina** — docking runs in stub mode with synthetic affinities.
 
 ---
 
-## Manual install (no scripts)
-
-If you'd rather run the pip commands yourself:
+## Manual install (step by step)
 
 ```bash
-# 1. Python 3.10+
-python --version
+# 1. Clone the repo
+git clone https://github.com/Babajan-B/PrismBB-Drug.git
+cd PrismBB-Drug
 
-# 2. Create venv
+# 2. Create and activate a virtual environment
 python -m venv venv
-source venv/bin/activate                # Linux/macOS
-# .\venv\Scripts\Activate.ps1           # Windows PowerShell
+source venv/bin/activate          # Linux / macOS
+# .\venv\Scripts\Activate.ps1    # Windows PowerShell
 
-# 3. Install everything (~3 GB; PyTorch + admet-ai are large)
+# 3. Install all dependencies (~3 GB — PyTorch is large)
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# 4. Run backend (terminal #1)
+# 4. Terminal 1 — start the backend
 cd backend
 uvicorn app.main:app --reload --port 8000
 
-# 5. Run UI (terminal #2)
+# 5. Terminal 2 — start the UI
 cd flask_frontend
 python app.py
 ```
 
 ---
 
-## Installing AutoDock Vina (optional — for real docking)
+## AutoDock Vina (optional — enables real docking)
 
-Without Vina the docking workbench works but produces synthetic affinities.
-The backend auto-detects the binary on startup — **no code change needed**.
+The app works without Vina — docking just uses synthetic scores. Install Vina to get real binding affinities:
 
-| OS | Install command | Notes |
+| OS | Command | Notes |
 |---|---|---|
 | **Ubuntu / Debian** | `sudo apt-get install autodock-vina` | Ships Vina 1.1 |
 | **Fedora / RHEL** | `sudo dnf install autodock-vina` | |
-| **macOS (Homebrew)** | `brew install autodock-vina` | |
-| **macOS / Linux (manual)** | Download from <https://vina.scripps.edu/downloads/>, extract, add to `PATH` | |
-| **Windows** | Download zip from <https://vina.scripps.edu/downloads/>, extract, add the folder containing `vina.exe` to `PATH` | |
+| **macOS** | `brew install autodock-vina` | |
+| **Any OS (manual)** | Download from [vina.scripps.edu/downloads](https://vina.scripps.edu/downloads/), extract, add to `PATH` | For Vina 1.2.x (recommended) |
+| **Windows** | Download zip from [vina.scripps.edu/downloads](https://vina.scripps.edu/downloads/), add folder with `vina.exe` to `PATH` | |
 
-Verify with:
+Verify installation:
 ```bash
 vina --version
 ```
 
-For Vina 1.2.x (recommended over 1.1), build from source or use a prebuilt
-Docker image such as `ccsbk/autodock-vina:1.2.5`.
+The backend auto-detects the binary at startup and switches to real docking automatically — **no code change needed**.
 
 ---
 
@@ -153,12 +166,12 @@ Docker image such as `ccsbk/autodock-vina:1.2.5`.
 
 | URL | What |
 |---|---|
-| <http://localhost:3000/> | Analyze (SMILES → descriptors + 3D + ADMET) |
+| <http://localhost:3000/> | Analyze — SMILES → descriptors + 3D + ADMET table |
 | <http://localhost:3000/docking> | Molecular docking workbench |
 | <http://localhost:3000/examples> | Curated example molecules |
 | <http://localhost:3000/about> | Architecture overview |
-| <http://localhost:8000/api/health> | Backend health |
-| <http://localhost:8000/api/docking/health> | Docking capabilities + engine mode |
+| <http://localhost:8000/api/health> | Backend health check |
+| <http://localhost:8000/api/docking/health> | Docking engine mode (real / stub) |
 | <http://localhost:8000/docs> | Auto-generated Swagger UI |
 
 ---
@@ -171,45 +184,47 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-30 smoke tests cover RDKit utilities, agent toolkit, parser/conformer agents, and parametrized molecule examples.
+30 smoke tests cover RDKit utilities, agent toolkit, parser/conformer agents, ADMET client, and parametrized molecule examples.
 
 ---
 
 ## Project layout
 
 ```
-.
-├── backend/                      FastAPI + agents + services
+PrismBB-Drug/
+│
+├── backend/                         FastAPI + multi-agent backend
 │   ├── app/
-│   │   ├── agents/               4 Agno agents + toolkit
-│   │   ├── routes/               molecules.py, docking.py
-│   │   ├── services/             rdkit_utils.py, molecular_docking.py, admet_ai_client.py
-│   │   ├── models/schemas.py     pydantic models
+│   │   ├── agents/                  4 Agno agents + shared toolkit
+│   │   ├── routes/                  molecules.py · docking.py
+│   │   ├── services/                rdkit_utils · molecular_docking · admet_ai_client
+│   │   ├── models/schemas.py        Pydantic request / response models
 │   │   └── main.py
-│   ├── tests/test_smoke.py       30 tests
+│   ├── tests/test_smoke.py          30 integration tests
 │   ├── Dockerfile
 │   ├── requirements.txt
 │   └── requirements-dev.txt
 │
-├── flask_frontend/               Jinja templates + vanilla JS UI
-│   ├── app.py                    Flask app + proxy routes
-│   ├── templates/                base, index, docking, examples, about
-│   ├── static/css/style.css      v2 design system
-│   ├── static/js/                main, analysis, docking, file-upload, viewer
+├── flask_frontend/                  Jinja2 + vanilla JS web UI
+│   ├── app.py                       Flask app + API proxy routes
+│   ├── templates/                   base · index · docking · examples · about
+│   ├── static/css/style.css         Design system v2 (dark/light theme)
+│   ├── static/js/                   main · analysis · docking · file-upload · viewer
 │   ├── Dockerfile
 │   └── requirements.txt
 │
-├── scripts/                      Cross-platform helpers
-│   ├── setup.sh   setup.ps1      install dependencies
-│   └── run.sh     run.ps1        launch backend + UI
+├── scripts/                         Cross-platform setup & run helpers
+│   ├── setup.sh    setup.ps1
+│   └── run.sh      run.ps1
 │
-├── colab/                        Zero-install cloud demo
-│   └── PrismBB_Drug.ipynb        One-click Colab notebook (free GPU)
+├── colab/
+│   └── PrismBB_Drug.ipynb           One-click Google Colab notebook (free GPU)
 │
-├── docker-compose.yml
-├── render.yaml                   One-click Render Blueprint
-├── requirements.txt              Combined backend + frontend
-├── DEPLOY.md                     Deployment guide (Docker / Render / Fly / etc.)
+├── docker-compose.yml               Local multi-service orchestration
+├── render.yaml                      One-click Render.com Blueprint
+├── .env.example                     Environment variable template
+├── requirements.txt                 Combined backend + frontend deps
+├── DEPLOY.md                        Full deployment guide
 └── README.md
 ```
 
@@ -219,30 +234,34 @@ pytest -v
 
 | Variable | Default | Purpose |
 |---|---|---|
-| `PORT` | `8000` / `3000` | Listen port (Render/Heroku inject this) |
+| `PORT` | `8000` / `3000` | Listen port (Render / Heroku inject this automatically) |
 | `BACKEND_URL` | `http://localhost:8000` | Where Flask proxies API calls |
-| `GROQ_API_KEY` | _unset_ | Enable real Agno LLM agents (otherwise direct-library fallback) |
-| `AGNO_TELEMETRY` | `false` | Disable Agno telemetry |
-| `ADMET_AI_CACHE_DIR` | `/data/admet_ai` | Where torch model weights are cached |
-| `HF_HOME` | `/data/huggingface` | HuggingFace transformers cache |
-| `WEB_CONCURRENCY` | `1` (backend) / `2` (frontend) | Gunicorn worker count |
-| `SECRET_KEY` | dev value | Flask session signing |
+| `GROQ_API_KEY` | _unset_ | Enables real Agno LLM agents (direct-library fallback used when unset) |
+| `AGNO_TELEMETRY` | `false` | Disable Agno usage telemetry |
+| `ADMET_AI_CACHE_DIR` | `/data/admet_ai` | Path for cached PyTorch model weights |
+| `HF_HOME` | `/data/huggingface` | HuggingFace Transformers cache |
+| `WEB_CONCURRENCY` | `1` / `2` | Gunicorn workers (keep backend at 1 to avoid OOM with admet-ai) |
+| `SECRET_KEY` | dev value | Flask session signing key |
 
-Copy `.env.example` → `.env` and edit as needed (picked up by Docker Compose).
+Copy `.env.example` → `.env` and fill in values as needed.
 
 ---
 
 ## Deployment
 
-See **[DEPLOY.md](DEPLOY.md)** for full guides for:
-- Local Docker
-- **Render.com** (one-click Blueprint via `render.yaml`)
-- Fly.io
-- Railway
-- Google Cloud Run
+See **[DEPLOY.md](DEPLOY.md)** for step-by-step guides:
+
+| Platform | Notes |
+|---|---|
+| **Google Colab** | Zero install, free GPU, public URL — best for demos |
+| **Docker (local)** | `docker compose up --build` — one command, any OS |
+| **Render.com** | One-click Blueprint via `render.yaml` — permanent URL |
+| **Fly.io** | `flyctl launch` with persistent volume for model cache |
+| **Railway** | Two services pointing at `backend/` and `flask_frontend/` |
+| **Google Cloud Run** | Build for `linux/amd64`, mount Cloud Storage for model weights |
 
 ---
 
 ## License
 
-[MIT](LICENSE) — see file for details.
+[MIT](LICENSE) — free to use, modify, and distribute.
