@@ -1,11 +1,40 @@
 # Deployment Guide — PrismBB Drug
 
-Two ways to ship this app:
+Three ways to ship this app:
 
+0. **Google Colab** (no-code-knowledge users) — click the [Open in Colab badge](README.md) in the README. A free, temporary URL with GPU-accelerated ADMET predictions and real AutoDock Vina docking. Best for demos or low-friction sharing.
 1. **Local Docker** — `docker compose up`, single command.
 2. **Render.com** — connect the GitHub repo, the `render.yaml` Blueprint provisions both services automatically.
 
 The same backend image works on Fly.io, Railway, DigitalOcean App Platform, Google Cloud Run, etc. — `render.yaml` is a translation, not a lock-in.
+
+The same backend image works on Fly.io, Railway, DigitalOcean App Platform, Google Cloud Run, etc. — `render.yaml` is a translation, not a lock-in.
+
+---
+
+## Option 0 — Google Colab (zero-install demo)
+
+Best for: non-technical users, sharing with collaborators, quick demos.
+
+The notebook at [`colab/PrismBB_Drug.ipynb`](colab/PrismBB_Drug.ipynb) handles everything:
+
+1. Open it in Colab via the README badge — or directly:
+   <https://colab.research.google.com/github/Babajan-B/PrismBB-Drug/blob/main/colab/PrismBB_Drug.ipynb>
+2. (Optional) `Runtime` → `Change runtime type` → **T4 GPU**
+3. `Runtime` → **`Run all`**
+4. After ~3 minutes a clickable "Open the app" button appears.
+
+How it works:
+- `apt-get install autodock-vina` puts the real Vina binary on PATH.
+- `pip install` brings in RDKit + admet-ai + meeko + agno.
+- Backend starts on `:8000`, Flask UI on `:3000` inside the Colab VM.
+- `cloudflared tunnel --url http://localhost:3000` (no signup) gives the user a public `https://*.trycloudflare.com` URL.
+- ADMET predictions run on the free Colab T4 GPU.
+
+Limitations:
+- URL changes every Colab session.
+- Colab disconnects after 90 min idle (12 h max on Pro).
+- For a permanent URL, use one of the persistent hosts below.
 
 ---
 

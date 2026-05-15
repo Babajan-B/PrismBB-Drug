@@ -1,5 +1,6 @@
 # PrismBB Drug — AI-Powered Drug Discovery Platform
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/Babajan-B/PrismBB-Drug/blob/main/colab/PrismBB_Drug.ipynb)
 [![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.112%2B-009688.svg)](https://fastapi.tiangolo.com/)
 [![RDKit](https://img.shields.io/badge/RDKit-2024%2B-orange.svg)](https://www.rdkit.org/)
@@ -13,6 +14,22 @@
 
 ![architecture](https://img.shields.io/badge/Architecture-Multi--Agent-success)
 ![cross-platform](https://img.shields.io/badge/OS-Linux%20%7C%20macOS%20%7C%20Windows-informational)
+
+---
+
+## 🚀 Try it in your browser — no install (recommended for new users)
+
+[**👉 Open PrismBB Drug in Google Colab**](https://colab.research.google.com/github/Babajan-B/PrismBB-Drug/blob/main/colab/PrismBB_Drug.ipynb)
+
+Zero installation. Free GPU. Real AutoDock Vina docking.
+
+1. Click the badge above
+2. In Colab, click **`Runtime` → `Run all`** (`Ctrl+F9` / `⌘F9`)
+3. After ~3 minutes a big purple **"Open the app"** button appears — click it
+4. Use PrismBB Drug in your browser
+
+> The notebook gives you a temporary public URL you can share with others.
+> For a permanent URL or production use, see the [installation options](#quick-start) below or [`DEPLOY.md`](DEPLOY.md).
 
 ---
 
@@ -185,6 +202,9 @@ pytest -v
 ├── scripts/                      Cross-platform helpers
 │   ├── setup.sh   setup.ps1      install dependencies
 │   └── run.sh     run.ps1        launch backend + UI
+│
+├── colab/                        Zero-install cloud demo
+│   └── PrismBB_Drug.ipynb        One-click Colab notebook (free GPU)
 │
 ├── docker-compose.yml
 ├── render.yaml                   One-click Render Blueprint
