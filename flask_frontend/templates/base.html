@@ -1,27 +1,27 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="PrismBB Drug — AI-powered molecular analytics, ADMET prediction, protein-ligand docking, and 3D visualization." />
-    <meta name="theme-color" content="#0b0d12" />
+    <meta name="theme-color" content="#ffffff" />
     <title>{% block title %}PrismBB Drug{% endblock %}</title>
 
     <!-- Preconnect & modern font stack -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 
     <!-- 3Dmol.js for molecular visualization -->
     <script src="https://3Dmol.csb.pitt.edu/build/3Dmol-min.js"></script>
 
-    <!-- Tiny FOUC-safe theme bootstrap -->
+    <!-- FOUC-safe theme bootstrap -->
     <script>
       (function () {
         try {
-          var t = localStorage.getItem('mas-theme') || 'dark';
+          var t = localStorage.getItem('mas-theme') || 'light';
           document.documentElement.setAttribute('data-theme', t);
         } catch(e) {}
       })();
@@ -30,22 +30,30 @@
     {% block head %}{% endblock %}
 </head>
 <body>
+    <!-- ===== HEADER ===== -->
     <header class="header">
         <div class="container">
             <div class="header-content">
+
+                <!-- Logo -->
                 <div class="logo">
                     <div class="logo-icon" aria-hidden="true">⚛︎</div>
                     <div class="logo-text">
                         <h1><a href="{{ url_for('index') }}">PrismBB Drug</a></h1>
-                        <p>AI-Powered Drug Discovery</p>
+                        <p>AI Drug Discovery</p>
                     </div>
                 </div>
-                <nav class="nav" aria-label="Primary">
-                    <a href="{{ url_for('index') }}" class="nav-link {% if request.endpoint == 'index' %}active{% endif %}">Analyze</a>
-                    <a href="{{ url_for('docking_page') }}" class="nav-link {% if request.endpoint == 'docking_page' %}active{% endif %}">Docking</a>
-                    <a href="{{ url_for('examples') }}" class="nav-link {% if request.endpoint == 'examples' %}active{% endif %}">Examples</a>
-                    <a href="{{ url_for('about') }}" class="nav-link {% if request.endpoint == 'about' %}active{% endif %}">About</a>
 
+                <!-- Centered nav links -->
+                <nav class="nav" aria-label="Primary">
+                    <a href="{{ url_for('index') }}"        class="nav-link {% if request.endpoint == 'index'        %}active{% endif %}">Analyze</a>
+                    <a href="{{ url_for('docking_page') }}" class="nav-link {% if request.endpoint == 'docking_page' %}active{% endif %}">Docking</a>
+                    <a href="{{ url_for('examples') }}"     class="nav-link {% if request.endpoint == 'examples'     %}active{% endif %}">Examples</a>
+                    <a href="{{ url_for('about') }}"        class="nav-link {% if request.endpoint == 'about'        %}active{% endif %}">About</a>
+                </nav>
+
+                <!-- Right side -->
+                <div class="nav-right">
                     <div class="status-indicator" id="backendStatus" title="Backend status">
                         <span class="status-dot"></span>
                         <span class="status-text">Checking…</span>
@@ -54,17 +62,22 @@
                     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle color theme" title="Toggle theme">
                         <span aria-hidden="true" id="themeIcon">☾</span>
                     </button>
-                </nav>
+
+                    <a href="{{ url_for('index') }}" class="btn-nav-cta">Launch Analysis →</a>
+                </div>
+
             </div>
         </div>
     </header>
 
+    <!-- ===== MAIN ===== -->
     <main class="main">
         <div class="container">
             {% block content %}{% endblock %}
         </div>
     </main>
 
+    <!-- ===== FOOTER ===== -->
     <footer class="footer">
         <div class="container">
             <div class="footer-content">

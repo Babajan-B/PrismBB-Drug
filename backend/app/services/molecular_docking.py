@@ -77,24 +77,76 @@ class MolecularDockingService:
         self, sdf_content: str, filename: Optional[str] = None
     ) -> Tuple[str, str]:
         """Convert SDF content to PDBQT (ligand only)."""
+        prepared = self.prepare_sdf_ligand(sdf_content, filename)
+        return prepared["pdbqt_content"], prepared["filename"]
+
+    def prepare_sdf_ligand(self, sdf_content: str, filename: Optional[str] = None) -> Dict[str, str | List[str]]:
+        """Prepare an SDF/MOL ligand for docking and visualization."""
         if not HAS_RDKIT:
             raise Exception("RDKit not installed — cannot parse SDF")
         try:
-            mol = Chem.MolFromMolBlock(sdf_content)
-            if mol is None:
+            source_mol = Chem.MolFromMolBlock(sdf_content, sanitize=True, removeHs=False)
+            if source_mol is None:
                 raise ValueError("Invalid SDF content")
-            mol = Chem.AddHs(mol)
-            if mol.GetNumConformers() == 0:
-                AllChem.EmbedMolecule(mol, randomSeed=42)
-                AllChem.UFFOptimizeMolecule(mol)
 
-            pdbqt_content = self._mol_to_pdbqt(mol)
+            notes: List[str] = []
+            if not self._has_usable_3d_conformer(source_mol):
+                notes.append("Input SDF/MOL is 2D or flat; generated a 3D docking conformer with RDKit ETKDG.")
+
+            source_pdb = Chem.MolToPDBBlock(source_mol)
+            source_sdf = Chem.MolToMolBlock(source_mol)
+            prepared_mol = self._ensure_ligand_3d(source_mol)
+            preview_pdb = Chem.MolToPDBBlock(prepared_mol)
+            preview_sdf = Chem.MolToMolBlock(prepared_mol)
+            pdbqt_content = self._mol_to_pdbqt(prepared_mol)
+            notes.append("PDBQT may omit nonpolar hydrogens because AutoDock merges them into heavy atoms.")
             base_name = filename.replace(".sdf", "") if filename else "ligand"
-            return pdbqt_content, f"{base_name}.pdbqt"
+            base_name = base_name.replace(".mol", "")
+            return {
+                "pdbqt_content": pdbqt_content,
+                "filename": f"{base_name}.pdbqt",
+                "preview_pdb_content": preview_pdb,
+                "source_pdb_content": source_pdb,
+                "preview_sdf_content": preview_sdf,
+                "source_sdf_content": source_sdf,
+                "conversion_notes": notes,
+            }
         except Exception as e:
             raise Exception(f"Failed to convert SDF to PDBQT: {e}") from e
 
     # ------------------------------------------------------ private converters
+    @staticmethod
+    def _has_usable_3d_conformer(mol) -> bool:
+        if mol.GetNumConformers() == 0:
+            return False
+        conf = mol.GetConformer()
+        if hasattr(conf, "Is3D") and not conf.Is3D():
+            return False
+        zs = [conf.GetAtomPosition(i).z for i in range(mol.GetNumAtoms())]
+        return (max(zs) - min(zs)) > 0.05
+
+    @staticmethod
+    def _ensure_ligand_3d(mol):
+        """Preserve real 3D SDFs, but build a docking-ready conformer from 2D SDFs."""
+        if MolecularDockingService._has_usable_3d_conformer(mol):
+            return Chem.AddHs(mol, addCoords=True)
+
+        mol_3d = Chem.RemoveHs(mol, sanitize=True)
+        mol_3d = Chem.AddHs(mol_3d)
+        params = AllChem.ETKDGv3()
+        params.randomSeed = 42
+        params.useRandomCoords = True
+        status = AllChem.EmbedMolecule(mol_3d, params)
+        if status != 0:
+            status = AllChem.EmbedMolecule(mol_3d, randomSeed=42, useRandomCoords=True)
+        if status != 0:
+            raise ValueError("Could not generate a 3D conformer from the SDF ligand")
+        if AllChem.MMFFHasAllMoleculeParams(mol_3d):
+            AllChem.MMFFOptimizeMolecule(mol_3d)
+        else:
+            AllChem.UFFOptimizeMolecule(mol_3d)
+        return mol_3d
+
     def _mol_to_pdbqt(self, mol) -> str:
         """Use Meeko if available, otherwise fall back to a simple per-atom writer."""
         if HAS_MEEKO:
@@ -126,8 +178,7 @@ class MolecularDockingService:
                 if atype not in ("N", "O", "S", "C", "H", "P", "F"):
                     atype = "C"
                 charge = 0.000
-                # PDBQT extends PDB with charge + atom type after column 70
-                pdbqt_line = f"{line[:70]}{charge:8.3f} {atype:>2}"
+                pdbqt_line = self._format_pdbqt_atom_line(line, charge, atype)
                 pdbqt_lines.append(pdbqt_line)
             elif line.startswith(("MODEL", "ENDMDL", "TER", "END")):
                 pdbqt_lines.append(line)
@@ -145,6 +196,11 @@ class MolecularDockingService:
         return self._simple_pdb_to_pdbqt(pdb_content)
 
     @staticmethod
+    def _format_pdbqt_atom_line(line: str, charge: float, atom_type: str) -> str:
+        """Format a PDB ATOM/HETATM line so Vina reads charge and atom type correctly."""
+        return f"{line[:66]:<70}{charge:6.3f} {atom_type:>2}"
+
+    @staticmethod
     def _simple_pdb_to_pdbqt(pdb_content: str) -> str:
         out: List[str] = ["ROOT"]
         atom_count = 0
@@ -155,7 +211,7 @@ class MolecularDockingService:
                 atype = atom_name[:1].upper() if atom_name else "C"
                 if atype not in ("N", "O", "S", "C", "H", "P", "F"):
                     atype = "C"
-                out.append(f"{line[:70]}{0.000:8.3f} {atype:>2}")
+                out.append(MolecularDockingService._format_pdbqt_atom_line(line, 0.000, atype))
         out.append("ENDROOT")
         out.append(f"TORSDOF {max(0, atom_count - 4)}")
         return "\n".join(out) + "\n"
@@ -229,10 +285,17 @@ class MolecularDockingService:
                 "mode": "vina-binary",
             }
         except Exception as e:
-            # Don't crash — fall back to stub so the UI keeps working
-            stub = self._run_vina_stub(protein_pdbqt, ligand_pdbqt, grid_config, docking_params)
-            stub["vina_log"] = f"[vina binary failed: {e}]\n\n{stub['vina_log']}"
-            return stub
+            return {
+                "poses": [],
+                "best_affinity": 0.0,
+                "average_affinity": 0.0,
+                "total_modes": 0,
+                "docked_pdbqt": "",
+                "vina_log": f"Vina binary failed: {e}",
+                "status": "error",
+                "mode": "vina-binary",
+                "message": f"Vina binary failed: {e}",
+            }
 
     # ----------------------------------------------------- stub fallback path
     @staticmethod

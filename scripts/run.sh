@@ -13,6 +13,16 @@ fi
 # shellcheck source=/dev/null
 source "$VENV_DIR/bin/activate"
 
+# AutoDock Vina is often installed through Conda/Miniforge on macOS. Make sure
+# locally launched backend processes can discover a `vina` binary even when the
+# shell that starts this script did not initialize Conda.
+for dir in "$HOME/miniforge3/bin" "$HOME/miniconda3/bin" "$HOME/anaconda3/bin"; do
+    if [ -x "$dir/vina" ]; then
+        export PATH="$dir:$PATH"
+        break
+    fi
+done
+
 cleanup() { kill "${BACKEND_PID:-}" "${FRONTEND_PID:-}" 2>/dev/null || true; }
 trap cleanup EXIT INT TERM
 

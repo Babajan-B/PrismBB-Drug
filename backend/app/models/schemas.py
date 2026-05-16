@@ -55,6 +55,11 @@ class PDBQTConversionResponse(BaseModel):
     filename: str = Field(..., description="Generated PDBQT filename")
     status: str = Field(default="success", description="Conversion status")
     message: Optional[str] = Field(None, description="Status message")
+    preview_pdb_content: Optional[str] = Field(None, description="Prepared 3D PDB preview content for visualization")
+    source_pdb_content: Optional[str] = Field(None, description="Uploaded molecule converted to PDB for source visualization")
+    preview_sdf_content: Optional[str] = Field(None, description="Prepared 3D SDF/MOL preview content for visualization")
+    source_sdf_content: Optional[str] = Field(None, description="Uploaded SDF/MOL content normalized for source visualization")
+    conversion_notes: List[str] = Field(default_factory=list, description="Notes about preparation changes")
 
 
 class GridConfiguration(BaseModel):

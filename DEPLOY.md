@@ -103,7 +103,8 @@ The frontend's `BACKEND_URL` is wired automatically through Render's internal DN
 > **Real docking caveat**: `apt-get install autodock-vina` on Debian Slim
 > may produce an older Vina (≤1.1) depending on the Debian release. For
 > Vina 1.2.x (recommended), build from source in a multi-stage Dockerfile
-> or pull a prebuilt image like `ccsbk/autodock-vina:1.2.5`.
+> pull a prebuilt image like `ccsbk/autodock-vina:1.2.5`, or install
+> `conda-forge::vina` in a Conda-based image.
 
 ---
 

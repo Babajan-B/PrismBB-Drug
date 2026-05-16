@@ -24,7 +24,7 @@ class MolecularApp {
             try { localStorage.setItem('mas-theme', t); } catch (e) {}
             if (icon) icon.textContent = t === 'dark' ? '☾' : '☀';
         };
-        const current = document.documentElement.getAttribute('data-theme') || 'dark';
+        const current = document.documentElement.getAttribute('data-theme') || 'light';
         apply(current);
         if (toggle) {
             toggle.addEventListener('click', () => {
