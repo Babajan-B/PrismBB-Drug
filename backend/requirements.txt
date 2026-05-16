@@ -16,6 +16,9 @@ rdkit>=2024.3.1                              # Linux / macOS / Windows wheels
 biopython>=1.83
 meeko>=0.7.0                                 # PDB/SDF → PDBQT preparation
 gemmi>=0.6.5                                 # required by meeko 0.7+
+# AutoDock Vina is intentionally not listed here: the real docking engine is
+# detected as a system/Conda binary named `vina`. On macOS install it with:
+#   conda install -c conda-forge vina
 
 # ---- ADMET model ensemble --------------------------------------------
 admet-ai>=1.4.0                              # pulls torch + pytorch-lightning

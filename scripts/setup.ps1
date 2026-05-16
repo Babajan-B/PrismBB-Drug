@@ -48,6 +48,8 @@ if ($VinaPath) {
     Write-Host "  Real docking is enabled."
 } else {
     Write-Host "⚠  AutoDock Vina not found on PATH — docking will run in STUB mode." -ForegroundColor Yellow
+    Write-Host "  Recommended with Conda/Miniforge:"
+    Write-Host "      conda install -c conda-forge vina"
     Write-Host "  Download the Windows binary from:"
     Write-Host "      https://vina.scripps.edu/downloads/"
     Write-Host "  Unzip, then add the folder containing vina.exe to your PATH"

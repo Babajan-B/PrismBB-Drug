@@ -50,7 +50,8 @@ else
             echo "  Install on Fedora:          sudo dnf install autodock-vina"
             ;;
         Darwin)
-            echo "  Install on macOS:           brew install autodock-vina"
+            echo "  Install on macOS:           conda install -c conda-forge vina"
+            echo "  Homebrew may not provide an autodock-vina formula."
             echo "  or download:                https://vina.scripps.edu/downloads/"
             ;;
         *)  echo "  Download:                   https://vina.scripps.edu/downloads/" ;;

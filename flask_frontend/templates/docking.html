@@ -4,13 +4,18 @@
 
 {% block content %}
 <!-- Hero -->
-<section class="hero">
-    <span class="badge">AUTODOCK VINA</span>
-    <h1>Protein-Ligand <span class="accent">Molecular Docking</span></h1>
-    <p>Upload a receptor and a ligand, convert to PDBQT, run Vina, and explore the binding poses in 3D.</p>
+<section class="hero" style="text-align:center;display:block;padding:48px 0 32px">
+    <div class="hero-badge" style="display:inline-block;margin-bottom:16px">AUTODOCK VINA</div>
+    <h1 style="text-transform:uppercase;font-size:clamp(2rem,4.5vw,3.2rem);margin-bottom:14px">
+        Protein-Ligand <span class="accent">Molecular Docking</span>
+    </h1>
+    <p style="color:var(--txt-2);max-width:560px;margin:0 auto;font-size:1.05rem">
+        Upload receptor and ligand(s), convert to PDBQT, run AutoDock Vina, and explore binding poses in 3D.
+        New: run <strong>Virtual Screening</strong> to rank a whole ligand library.
+    </p>
 </section>
 
-<!-- Pipeline status -->
+<!-- Pipeline stepper -->
 <div class="card">
     <div class="progress-steps" id="dockSteps">
         <div class="step active" data-step="upload"><div class="step-icon">①</div><span>Upload</span></div>
@@ -24,26 +29,44 @@
     <div id="dockBackendBadge" class="docking-mode-badge" style="margin-top:14px"></div>
 </div>
 
+<!-- Mode toggle -->
+<div class="card">
+    <div class="section-header" style="margin-bottom:18px">
+        <h2>Docking mode</h2>
+        <p>Choose single docking or screen a library of ligands against the receptor.</p>
+    </div>
+    <div style="display:flex;justify-content:center;">
+        <div class="input-method-tabs" role="tablist">
+            <button type="button" class="tab-btn active" id="modeSingleBtn" role="tab" aria-selected="true">
+                🎯 Single Docking
+            </button>
+            <button type="button" class="tab-btn" id="modeVSBtn" role="tab" aria-selected="false">
+                🔬 Virtual Screening
+            </button>
+        </div>
+    </div>
+</div>
+
 <div id="messageContainer" class="message-container"></div>
 
 <!-- Step 1: Upload -->
 <div class="card">
     <div class="section-header">
         <h2>① Upload molecules</h2>
-        <p>Drop a protein PDB and a ligand PDB or SDF below.</p>
+        <p id="uploadDesc">Drop a protein PDB/PDBQT and a ligand PDB/SDF/MOL/PDBQT below.</p>
     </div>
 
     <div class="docking-grid">
-        <!-- Protein upload -->
+        <!-- Protein upload (shared by both modes) -->
         <div class="result-card">
             <h3>Receptor (protein)</h3>
             <div class="file-upload-container">
-                <input type="file" id="proteinInput" class="file-input" accept=".pdb,.ent" />
+                <input type="file" id="proteinInput" class="file-input" accept=".pdb,.ent,.pdbqt" />
                 <div class="file-upload-area" id="proteinDrop">
                     <div class="file-upload-icon">🧬</div>
                     <div class="file-upload-text">
-                        <strong>Protein PDB</strong><br/>
-                        <small>.pdb or .ent — typically &gt; 80 ATOM records</small>
+                        <strong>Protein PDB / PDBQT</strong><br/>
+                        <small>.pdb, .ent, or pre-converted .pdbqt</small>
                     </div>
                 </div>
                 <div class="file-info" id="proteinInfo" style="display:none">
@@ -54,22 +77,52 @@
             </div>
         </div>
 
-        <!-- Ligand upload -->
-        <div class="result-card">
+        <!-- Single ligand upload -->
+        <div class="result-card" id="singleLigandPanel">
             <h3>Ligand (small molecule)</h3>
             <div class="file-upload-container">
-                <input type="file" id="ligandInput" class="file-input" accept=".pdb,.sdf,.mol" />
+                <input type="file" id="ligandInput" class="file-input" accept=".pdb,.sdf,.mol,.pdbqt" />
                 <div class="file-upload-area" id="ligandDrop">
                     <div class="file-upload-icon">💊</div>
                     <div class="file-upload-text">
-                        <strong>Ligand PDB / SDF</strong><br/>
-                        <small>.pdb, .sdf, or .mol — single molecule</small>
+                        <strong>Ligand PDB / SDF / PDBQT</strong><br/>
+                        <small>.pdb, .sdf, .mol, or pre-converted .pdbqt</small>
                     </div>
                 </div>
                 <div class="file-info" id="ligandInfo" style="display:none">
                     <span class="file-name"></span>
                     <span class="file-size"></span>
                     <button type="button" class="file-remove" data-clear="ligand">✕</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Virtual screening ligand library -->
+        <div class="result-card hidden" id="vsLigandPanel">
+            <h3>Ligand library</h3>
+            <div class="file-upload-container">
+                <input type="file" id="vsLigandInput" class="file-input" accept=".sdf,.pdb,.mol,.pdbqt" multiple />
+                <div class="file-upload-area" id="vsLigandDrop">
+                    <div class="file-upload-icon">📂</div>
+                    <div class="file-upload-text">
+                        <strong>Upload SDF or multiple files</strong><br/>
+                        <small>Multi-molecule .sdf or multiple .pdb/.mol/.pdbqt files</small>
+                    </div>
+                </div>
+            </div>
+            <!-- Library table -->
+            <div id="vsLibraryWrap" class="hidden" style="margin-top:16px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <strong id="vsLigandCount" style="color:var(--txt-1)">0 ligands loaded</strong>
+                    <button type="button" class="btn btn-small btn-ghost" id="vsClearLibrary">Clear all</button>
+                </div>
+                <div class="table-wrap" style="max-height:210px;overflow-y:auto">
+                    <table class="poses-table" id="vsLibraryTable">
+                        <thead>
+                            <tr><th>#</th><th>Name</th><th>Type</th><th>Size</th><th></th></tr>
+                        </thead>
+                        <tbody id="vsLibraryTbody"></tbody>
+                    </table>
                 </div>
             </div>
         </div>
@@ -80,6 +133,10 @@
             <span class="btn-icon">⟶</span>
             <span class="btn-text">Convert both files to PDBQT</span>
         </button>
+        <button id="btnConvertVS" class="btn btn-primary hidden" disabled>
+            <span class="btn-icon">⟶</span>
+            <span class="btn-text">Convert receptor &amp; proceed</span>
+        </button>
         <div class="form-hint" id="convertHint">Upload both files to enable conversion</div>
     </div>
 </div>
@@ -88,7 +145,7 @@
 <div class="card hidden" id="conversionCard">
     <div class="section-header">
         <h2>② PDBQT conversion</h2>
-        <p>Generated atom types and partial charges via Meeko/RDKit.</p>
+        <p>Generated atom types and partial charges via Meeko / RDKit.</p>
     </div>
     <div class="docking-grid">
         <div class="result-card">
@@ -97,42 +154,80 @@
             <pre class="code-block" id="proteinPdbqt"></pre>
             <button class="btn btn-small" data-download="protein">Download</button>
         </div>
-        <div class="result-card">
+        <div class="result-card" id="singleLigandConversion">
             <h3>Ligand.pdbqt</h3>
             <div class="pdbqt-stats" id="ligandStats"></div>
+            <div class="docking-grid" style="gap:12px;margin:12px 0">
+                <div>
+                    <h4 style="font-size:0.82rem;margin:0 0 8px;color:var(--txt-2)">Uploaded ligand</h4>
+                    <div class="viewer-container" style="height:240px">
+                        <div id="sourceLigandPreview3D" class="molecular-viewer" style="height:240px"></div>
+                    </div>
+                </div>
+                <div>
+                    <h4 style="font-size:0.82rem;margin:0 0 8px;color:var(--txt-2)">Prepared 3D preview</h4>
+                    <div class="viewer-container" style="height:240px">
+                        <div id="ligandPreview3D" class="molecular-viewer" style="height:240px"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="viewer-info" id="ligandPreviewInfo" style="margin-bottom:12px">
+                Uploaded ligand and prepared PDBQT previews appear here after conversion.
+            </div>
             <pre class="code-block" id="ligandPdbqt"></pre>
             <button class="btn btn-small" data-download="ligand">Download</button>
         </div>
     </div>
 </div>
 
-<!-- Step 3: Grid + parameters -->
+<!-- Step 3: 3D Preview + Grid + Parameters (shared) -->
 <div class="card hidden" id="paramsCard">
     <div class="section-header">
-        <h2>③ Grid box &amp; docking parameters</h2>
-        <p>Define the search space and Vina parameters.</p>
+        <h2>③ Preview &amp; search box</h2>
+        <p>Position the orange search box on the protein, then configure Vina parameters.</p>
     </div>
 
+    <!-- 3D preview viewer -->
+    <div class="result-card full-width" style="margin-bottom:22px">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:14px">
+            <h3 style="margin:0">3D Structure Preview</h3>
+            <div style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+                <!-- Blind docking toggle -->
+                <label id="blindDockingLabel" style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:0.875rem;font-weight:600;color:var(--txt-1);padding:6px 14px;border:1.5px dashed var(--border-strong);border-radius:var(--r-md);background:var(--bg);user-select:none">
+                    <input type="checkbox" id="blindDockingToggle" style="width:15px;height:15px;accent-color:var(--accent);cursor:pointer">
+                    🔍 Blind docking (full protein)
+                </label>
+                <button class="btn btn-small btn-ghost" id="btnAutoGrid">Auto-center on ligand</button>
+            </div>
+        </div>
+        <div class="viewer-container" style="height:340px">
+            <div id="previewViewer3D" class="molecular-viewer" style="height:340px"></div>
+        </div>
+        <div class="viewer-info" id="previewViewerInfo" style="margin-top:8px">
+            Protein in cartoon · Ligand in stick · <span style="color:var(--accent);font-weight:600">Orange box = search region</span>
+            &nbsp;— adjust the grid inputs below to reposition the box.
+        </div>
+    </div>
+
+    <!-- Grid + params -->
     <div class="docking-grid">
-        <!-- Grid -->
         <div class="result-card">
             <h3>Grid box (Å)</h3>
             <div class="grid-inputs">
-                <label>Center X<input type="number" id="cx" value="0" step="0.1"></label>
+                <label>Center X<input type="number" id="cx" value="0" step="0.1" id="cx"></label>
                 <label>Center Y<input type="number" id="cy" value="0" step="0.1"></label>
                 <label>Center Z<input type="number" id="cz" value="0" step="0.1"></label>
-                <label>Size X<input type="number" id="sx" value="20" step="1" min="1" max="50"></label>
-                <label>Size Y<input type="number" id="sy" value="20" step="1" min="1" max="50"></label>
-                <label>Size Z<input type="number" id="sz" value="20" step="1" min="1" max="50"></label>
+                <label>Size X<input type="number" id="sx" value="20" step="1" min="1" max="126"></label>
+                <label>Size Y<input type="number" id="sy" value="20" step="1" min="1" max="126"></label>
+                <label>Size Z<input type="number" id="sz" value="20" step="1" min="1" max="126"></label>
             </div>
-            <button class="btn btn-small btn-ghost" id="btnAutoGrid">Auto-detect from ligand</button>
+            <p style="font-size:0.75rem;color:var(--txt-3);margin-top:8px">Max 126 Å per axis · Blind docking sets full protein extent</p>
         </div>
 
-        <!-- Params -->
         <div class="result-card">
             <h3>Vina parameters</h3>
             <div class="grid-inputs">
-                <label>Scoring
+                <label>Scoring function
                     <select id="ff">
                         <option value="vina" selected>vina</option>
                         <option value="ad4">ad4</option>
@@ -149,6 +244,9 @@
                     <input type="number" id="erange" value="3.0" step="0.5" min="0.5" max="10">
                 </label>
             </div>
+            <div id="stubWarning" class="hidden" style="margin-top:14px;padding:10px 14px;background:var(--accent-light);border:1.5px solid var(--accent);border-radius:var(--r-md);font-size:0.8rem;color:var(--accent-dark)">
+                ⚠️ <strong>Stub mode active</strong> — Vina binary not found. Affinity values will be synthetic. Install <code>vina</code> for real docking.
+            </div>
         </div>
     </div>
 
@@ -157,11 +255,15 @@
             <span class="btn-icon">▶</span>
             <span class="btn-text">Run docking</span>
         </button>
-        <div class="form-hint" id="dockHint">Pose results will appear below.</div>
+        <button id="btnRunVS" class="btn btn-primary hidden">
+            <span class="btn-icon">▶</span>
+            <span class="btn-text" id="btnRunVSText">Run virtual screening</span>
+        </button>
+        <div class="form-hint" id="dockHint">Results will appear below.</div>
     </div>
 </div>
 
-<!-- Loading -->
+<!-- Loading (single docking) -->
 <div class="card hidden" id="dockLoadingCard">
     <div class="loading-container">
         <div class="loading-spinner"></div>
@@ -170,7 +272,20 @@
     </div>
 </div>
 
-<!-- Step 4: Results -->
+<!-- VS Progress -->
+<div class="card hidden" id="vsProgressCard">
+    <div class="loading-container">
+        <div class="loading-spinner"></div>
+        <h3 id="vsProgressTitle">Virtual screening in progress…</h3>
+        <p id="vsProgressDesc">Preparing…</p>
+        <div style="margin-top:16px;background:var(--border);border-radius:99px;height:8px;overflow:hidden;width:100%;max-width:480px;margin-left:auto;margin-right:auto">
+            <div id="vsProgressBar" style="height:100%;width:0%;background:var(--accent);border-radius:99px;transition:width 0.4s ease"></div>
+        </div>
+        <div id="vsProgressLog" style="margin-top:16px;font-size:0.78rem;color:var(--txt-2);max-height:150px;overflow-y:auto;text-align:left;padding:0 12px;font-family:var(--font-mono);line-height:1.6;width:100%;max-width:540px;margin-left:auto;margin-right:auto"></div>
+    </div>
+</div>
+
+<!-- Step 4: Results (single) -->
 <div class="card hidden" id="resultsCard">
     <div class="results-header">
         <h2>④ Docking results</h2>
@@ -215,11 +330,17 @@
     </div>
 
     <div class="result-card full-width">
-        <h3>3D pose viewer</h3>
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <h3 style="margin:0">3D pose viewer</h3>
+            <button class="btn btn-small" id="btnDownloadComplex" type="button">
+                <span class="btn-icon">↓</span>
+                <span class="btn-text">Download complex</span>
+            </button>
+        </div>
         <div class="viewer-container">
             <div id="dockViewer3D" class="molecular-viewer"></div>
         </div>
-        <div class="viewer-info" id="dockViewerInfo">Receptor in cartoon, ligand in stick — best pose by default.</div>
+        <div class="viewer-info" id="dockViewerInfo">Receptor in cartoon · ligand in stick — best pose shown.</div>
     </div>
 
     <div class="result-card full-width">
@@ -227,8 +348,76 @@
         <pre class="code-block" id="vinaLog"></pre>
     </div>
 </div>
+
+<!-- Step 4: Results (virtual screening) -->
+<div class="card hidden" id="vsResultsCard">
+    <div class="results-header">
+        <h2>④ Virtual screening results</h2>
+        <div style="display:flex;gap:8px">
+            <button class="btn btn-secondary" id="btnExportCSV">
+                <span class="btn-icon">↓</span><span class="btn-text">Export CSV</span>
+            </button>
+            <button class="btn btn-secondary" id="btnResetVS">
+                <span class="btn-icon">↻</span><span class="btn-text">New run</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="docking-summary">
+        <div class="kpi">
+            <span class="kpi-label">Screened</span>
+            <span class="kpi-value" id="vsLigandsScreened">—</span>
+            <span class="kpi-unit">ligands</span>
+        </div>
+        <div class="kpi">
+            <span class="kpi-label">Succeeded</span>
+            <span class="kpi-value" id="vsSucceeded">—</span>
+            <span class="kpi-unit"></span>
+        </div>
+        <div class="kpi">
+            <span class="kpi-label">Best affinity</span>
+            <span class="kpi-value" id="vsBestAffinity">—</span>
+            <span class="kpi-unit">kcal/mol</span>
+        </div>
+        <div class="kpi">
+            <span class="kpi-label">Top ligand</span>
+            <span class="kpi-value" id="vsBestLigand" style="font-size:0.9rem;word-break:break-all">—</span>
+        </div>
+    </div>
+
+    <div class="result-card full-width">
+        <h3>
+            Ranked ligands
+            <span style="font-size:0.82rem;color:var(--txt-2);font-weight:400;margin-left:8px">Click any row to view 3D pose</span>
+        </h3>
+        <div class="table-wrap">
+            <table class="poses-table" id="vsRankedTable">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Ligand</th>
+                        <th>Best affinity (kcal/mol)</th>
+                        <th>Avg affinity</th>
+                        <th>Modes</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="vsRankedTbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="result-card full-width" id="vsViewerCard" style="display:none">
+        <h3>3D pose — <span id="vsViewerLabel" style="color:var(--accent)">—</span></h3>
+        <div class="viewer-container">
+            <div id="vsViewer3D" class="molecular-viewer"></div>
+        </div>
+        <div class="viewer-info">Receptor in cartoon · selected ligand in stick (orange carbons).</div>
+    </div>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/docking.js') }}"></script>
+<script src="{{ url_for('static', filename='js/docking.js') }}?v=20260517-viewer-pdbqt-safe"></script>
 {% endblock %}

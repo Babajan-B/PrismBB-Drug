@@ -4,6 +4,7 @@ from app.services.rdkit_utils import RDKitUtils
 from app.agents.toolkit import rdkit_sanitize, rdkit_conformer
 from app.agents.parser_agent import parser_agent
 from app.agents.conformer_agent import conformer_agent
+from app.services.molecular_docking import MolecularDockingService
 
 
 class TestRDKitUtils:
@@ -282,4 +283,43 @@ class TestMoleculeExamples:
 
 def test_placeholder():
     """Keep the original placeholder test."""
-    assert True 
+    assert True
+
+
+class TestMolecularDockingConversion:
+    """Tests for ligand preparation before Vina docking."""
+
+    def test_2d_sdf_is_converted_to_3d_pdbqt(self):
+        sdf_2d = """ethanol_2d
+  RDKit
+
+  3  2  0  0  0  0            999 V2000
+    0.0000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    1.5000    0.0000    0.0000 C   0  0  0  0  0  0  0  0  0  0  0  0
+    2.1000    1.2000    0.0000 O   0  0  0  0  0  0  0  0  0  0  0  0
+  1  2  1  0
+  2  3  1  0
+M  END
+$$$$
+"""
+        service = MolecularDockingService()
+        pdbqt, filename = service.convert_sdf_to_pdbqt(sdf_2d, "ethanol.sdf")
+        prepared = service.prepare_sdf_ligand(sdf_2d, "ethanol.sdf")
+        coords = []
+        for line in pdbqt.splitlines():
+            if line.startswith(("ATOM", "HETATM")):
+                coords.append((
+                    float(line[30:38]),
+                    float(line[38:46]),
+                    float(line[46:54]),
+                ))
+
+        assert filename == "ethanol.pdbqt"
+        assert "HETATM" in prepared["preview_pdb_content"]
+        assert "HETATM" in prepared["source_pdb_content"]
+        assert "V2000" in prepared["preview_sdf_content"]
+        assert "V2000" in prepared["source_sdf_content"]
+        assert prepared["conversion_notes"]
+        assert len(coords) >= 3
+        assert max(z for _, _, z in coords) - min(z for _, _, z in coords) > 0.05
+        assert not any(abs(x) < 0.01 and abs(y) < 0.01 and abs(z) < 0.01 for x, y, z in coords)

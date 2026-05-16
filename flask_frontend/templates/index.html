@@ -3,37 +3,96 @@
 {% block title %}Analyze · {{ super() }}{% endblock %}
 
 {% block content %}
-<!-- Hero -->
+
+<!-- ===== HERO ===== -->
 <section class="hero">
-    <span class="badge">v2 · MULTI-AGENT PIPELINE</span>
-    <h1>Molecular Insights, <span class="accent">Powered by AI</span></h1>
-    <p>Parse SMILES, generate 3D conformers, and predict ADMET properties — all orchestrated by a coordinated team of Agno agents.</p>
+    <!-- Left: text + CTAs + stats -->
+    <div class="hero-left">
+        <div class="hero-badge">v2 · Multi-Agent Pipeline</div>
+
+        <h1>
+            Analyze Molecules,
+            <span class="accent">Predict Drug Properties</span>
+        </h1>
+
+        <p class="hero-desc">
+            Paste a SMILES string and get <strong>17+ molecular descriptors</strong>,
+            3D conformers, and full ADMET predictions — orchestrated by a multi-agent AI pipeline in seconds.
+        </p>
+
+        <div class="hero-actions">
+            <a href="#analyzeSection" class="btn btn-outline">
+                Run Free Analysis →
+            </a>
+            <a href="{{ url_for('examples') }}" class="btn btn-primary">
+                View Examples →
+            </a>
+        </div>
+
+        <div class="hero-stats">
+            <div class="hero-stat">
+                <div class="hero-stat-label">Descriptors</div>
+                <div class="hero-stat-value">17+</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-label">ADMET Props</div>
+                <div class="hero-stat-value">Full</div>
+            </div>
+            <div class="hero-stat">
+                <div class="hero-stat-label">3D Conformers</div>
+                <div class="hero-stat-value">Live</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right: hero molecule image -->
+    <div class="hero-image-wrap">
+        <img
+            src="{{ url_for('static', filename='img/docking.png') }}"
+            alt="Protein-ligand docking visualization showing molecular interactions"
+            class="hero-molecule-img"
+            onerror="this.parentElement.style.display='none'"
+        />
+    </div>
 </section>
 
-<!-- Progress Steps -->
-<div class="card">
+<!-- ===== TECH STACK STRIP ===== -->
+<div class="logos-section">
+    <div class="logos-label">Powered by</div>
+    <div class="logos-row">
+        <span class="logo-pill"><span class="logo-pill-icon">🧪</span> RDKit</span>
+        <span class="logo-pill"><span class="logo-pill-icon">⚡</span> FastAPI</span>
+        <span class="logo-pill"><span class="logo-pill-icon">🤖</span> Agno Agents</span>
+        <span class="logo-pill"><span class="logo-pill-icon">🧬</span> ADMET-AI</span>
+        <span class="logo-pill"><span class="logo-pill-icon">🌐</span> 3Dmol.js</span>
+        <span class="logo-pill"><span class="logo-pill-icon">🔮</span> Claude AI</span>
+    </div>
+</div>
+
+<!-- ===== PROGRESS STEPPER ===== -->
+<div class="stepper-wrap" id="analyzeSection">
     <div class="progress-steps" id="progressSteps">
         <div class="step active" data-step="input">
-            <div class="step-icon">①</div>
+            <div class="step-icon">1</div>
             <span>Input SMILES</span>
         </div>
         <div class="step-connector"></div>
         <div class="step" data-step="analysis">
-            <div class="step-icon">②</div>
-            <span>Multi-Agent Analysis</span>
+            <div class="step-icon">2</div>
+            <span>Agent Analysis</span>
         </div>
         <div class="step-connector"></div>
         <div class="step" data-step="results">
-            <div class="step-icon">③</div>
-            <span>Insights &amp; 3D</span>
+            <div class="step-icon">3</div>
+            <span>Results &amp; 3D</span>
         </div>
     </div>
 </div>
 
-<!-- Messages -->
+<!-- ===== MESSAGES ===== -->
 <div id="messageContainer" class="message-container"></div>
 
-<!-- Input Section -->
+<!-- ===== INPUT SECTION ===== -->
 <div class="card" id="inputSection">
     <div class="section-header">
         <h2>Enter a molecule</h2>
@@ -94,7 +153,7 @@
         </div>
 
         <div class="form-actions">
-            <button type="submit" class="btn btn-primary" id="analyzeBtn">
+            <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn">
                 <span class="btn-icon">→</span>
                 <span class="btn-text">Run multi-agent analysis</span>
             </button>
@@ -130,7 +189,7 @@
     </div>
 </div>
 
-<!-- Loading -->
+<!-- ===== LOADING ===== -->
 <div class="card hidden" id="loadingSection">
     <div class="loading-container">
         <div class="loading-spinner" aria-hidden="true"></div>
@@ -145,7 +204,7 @@
     </div>
 </div>
 
-<!-- Results -->
+<!-- ===== RESULTS ===== -->
 <div class="card hidden" id="resultsSection">
     <div class="results-header">
         <h2>Analysis Results</h2>
@@ -161,9 +220,9 @@
         <div class="viewer-container">
             <div id="viewer3d" class="molecular-viewer"></div>
             <div class="viewer-controls">
-                <button class="btn btn-small" id="rotateBtn">Rotate</button>
-                <button class="btn btn-small" id="resetViewBtn">Reset</button>
-                <button class="btn btn-small" id="styleBtn">Style</button>
+                <button class="btn btn-small btn-secondary" id="rotateBtn">Rotate</button>
+                <button class="btn btn-small btn-secondary" id="resetViewBtn">Reset</button>
+                <button class="btn btn-small btn-secondary" id="styleBtn">Style</button>
             </div>
         </div>
         <div class="viewer-info" id="viewerInfo">
@@ -226,6 +285,7 @@
         <div id="admetEmpty" class="admet-empty hidden">No properties match your filter.</div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block scripts %}

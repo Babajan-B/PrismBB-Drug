@@ -46,9 +46,11 @@
 ### Molecular Docking
 | Capability | Details |
 |---|---|
-| **File conversion** | PDB / SDF → PDBQT using Meeko + RDKit |
-| **AutoDock Vina** | Real protein-ligand docking with grid box, exhaustiveness, scoring function selection |
-| **Pose viewer** | Receptor cartoon + docked ligand in 3D |
+| **File conversion** | Receptor PDB / PDBQT and ligand PDB / SDF / MOL / PDBQT preparation using RDKit + Meeko |
+| **SDF ligand handling** | 2D SDF/MOL ligands are converted into a 3D conformer before PDBQT generation |
+| **AutoDock Vina** | Real protein-ligand docking with configurable grid box, exhaustiveness, scoring function, and pose count |
+| **3D previews** | Uploaded ligand, prepared ligand, receptor, grid box, and selected docking pose previews in 3Dmol.js |
+| **Pose downloads** | Download converted PDBQT files and selected receptor-ligand complex poses |
 | **Stub mode** | Full UI with synthetic results when Vina binary is absent — no broken screens |
 
 ### Multi-Agent Backend
@@ -143,22 +145,43 @@ python app.py
 
 ## AutoDock Vina (optional — enables real docking)
 
-The app works without Vina — docking just uses synthetic scores. Install Vina to get real binding affinities:
+The app works without Vina — docking uses synthetic scores in stub mode. Install Vina to get real binding affinities and generated docking poses:
 
 | OS | Command | Notes |
 |---|---|---|
 | **Ubuntu / Debian** | `sudo apt-get install autodock-vina` | Ships Vina 1.1 |
 | **Fedora / RHEL** | `sudo dnf install autodock-vina` | |
-| **macOS** | `brew install autodock-vina` | |
+| **macOS** | `conda install -c conda-forge vina` | Recommended for Apple Silicon and Intel Macs; Homebrew does not currently provide a reliable `autodock-vina` formula |
 | **Any OS (manual)** | Download from [vina.scripps.edu/downloads](https://vina.scripps.edu/downloads/), extract, add to `PATH` | For Vina 1.2.x (recommended) |
 | **Windows** | Download zip from [vina.scripps.edu/downloads](https://vina.scripps.edu/downloads/), add folder with `vina.exe` to `PATH` | |
 
 Verify installation:
 ```bash
+which vina      # macOS/Linux
 vina --version
 ```
 
-The backend auto-detects the binary at startup and switches to real docking automatically — **no code change needed**.
+The backend auto-detects a `vina` binary on `PATH` at startup and switches to real docking automatically — **no code change needed**. If the backend was already running when you installed Vina, restart it.
+
+For macOS Conda/Miniforge users, make sure the same terminal that starts the backend can see Vina:
+
+```bash
+export PATH="$HOME/miniforge3/bin:$PATH"
+which vina
+vina --version
+```
+
+You can also confirm from the app:
+
+- UI badge on `/docking`: `Engine: real AutoDock Vina binary detected`
+- API check: <http://localhost:8000/api/docking/health>
+
+### Docking file notes
+
+- Vina itself docks **PDBQT** ligands, so SDF/MOL ligands are prepared to PDBQT before docking.
+- Uploaded 2D SDF/MOL ligands are converted to a 3D conformer with RDKit ETKDG before Meeko generates PDBQT.
+- PDBQT atom counts can be lower than SDF atom counts because AutoDock merges nonpolar hydrogens into heavy atoms. This is expected.
+- The 3D UI uses viewer-safe SDF/PDB previews where possible so branched PDBQT ligand files do not appear as only a small fragment.
 
 ---
 
@@ -184,7 +207,7 @@ pip install -r requirements-dev.txt
 pytest -v
 ```
 
-30 smoke tests cover RDKit utilities, agent toolkit, parser/conformer agents, ADMET client, and parametrized molecule examples.
+31 smoke tests cover RDKit utilities, agent toolkit, parser/conformer agents, ADMET client, docking conversion, and parametrized molecule examples.
 
 ---
 

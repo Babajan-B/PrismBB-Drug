@@ -45,30 +45,51 @@ def convert_to_pdbqt(request: PDBQTConversionRequest):
     """Convert PDB or SDF content to PDBQT format."""
     if not request.file_content.strip():
         raise HTTPException(400, "File content cannot be empty")
-    if request.file_type.lower() not in ("pdb", "sdf"):
-        raise HTTPException(400, "File type must be 'pdb' or 'sdf'")
+    # Normalise file type: .mol files are treated as SDF (same format, single molecule)
+    norm_type = request.file_type.lower()
+    if norm_type == "mol":
+        norm_type = "sdf"
+    if norm_type not in ("pdb", "sdf"):
+        raise HTTPException(400, "File type must be 'pdb', 'sdf', or 'mol'")
     if request.molecule_type.lower() not in ("protein", "ligand"):
         raise HTTPException(400, "Molecule type must be 'protein' or 'ligand'")
-    if request.molecule_type.lower() == "protein" and request.file_type.lower() != "pdb":
+    if request.molecule_type.lower() == "protein" and norm_type != "pdb":
         raise HTTPException(400, "Protein molecules must be supplied as PDB")
 
     try:
-        if request.file_type.lower() == "pdb":
+        preview_pdb = None
+        source_pdb = None
+        preview_sdf = None
+        source_sdf = None
+        notes = []
+        if norm_type == "pdb":
             content, fname = docking_service.convert_pdb_to_pdbqt(
                 request.file_content, request.molecule_type.lower(), request.filename,
             )
         else:
             if request.molecule_type.lower() == "protein":
-                raise HTTPException(400, "SDF format not supported for proteins")
-            content, fname = docking_service.convert_sdf_to_pdbqt(
+                raise HTTPException(400, "SDF/MOL format not supported for proteins")
+            prepared = docking_service.prepare_sdf_ligand(
                 request.file_content, request.filename,
             )
+            content = prepared["pdbqt_content"]
+            fname = prepared["filename"]
+            preview_pdb = prepared.get("preview_pdb_content")
+            source_pdb = prepared.get("source_pdb_content")
+            preview_sdf = prepared.get("preview_sdf_content")
+            source_sdf = prepared.get("source_sdf_content")
+            notes = prepared.get("conversion_notes", [])
 
         return PDBQTConversionResponse(
             pdbqt_content=content,
             filename=fname,
             status="success",
             message=f"Converted {request.file_type.upper()} ({request.molecule_type}) to PDBQT",
+            preview_pdb_content=preview_pdb,
+            source_pdb_content=source_pdb,
+            preview_sdf_content=preview_sdf,
+            source_sdf_content=source_sdf,
+            conversion_notes=notes,
         )
     except HTTPException:
         raise
@@ -88,8 +109,8 @@ def run_molecular_docking(request: DockingRequest):
     grid = request.grid_config
     if any(s <= 0 for s in (grid.size_x, grid.size_y, grid.size_z)):
         raise HTTPException(400, "Grid sizes must be positive")
-    if any(s > 50 for s in (grid.size_x, grid.size_y, grid.size_z)):
-        raise HTTPException(400, "Grid sizes cannot exceed 50 Å")
+    if any(s > 126 for s in (grid.size_x, grid.size_y, grid.size_z)):
+        raise HTTPException(400, "Grid sizes cannot exceed 126 Å (AutoDock Vina maximum)")
 
     params = request.docking_params
     if not 1 <= params.num_modes <= 20:
@@ -197,7 +218,7 @@ def get_supported_formats():
         },
         "limitations": {
             "max_file_size": "100 MB",
-            "grid_size_range": "1–50 Å per dimension",
+            "grid_size_range": "1–126 Å per dimension",
             "num_modes_range": "1–20",
             "exhaustiveness_range": "1–32",
         },
