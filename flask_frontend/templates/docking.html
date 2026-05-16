@@ -341,6 +341,26 @@
             <div id="dockViewer3D" class="molecular-viewer"></div>
         </div>
         <div class="viewer-info" id="dockViewerInfo">Receptor in cartoon · ligand in stick — best pose shown.</div>
+        <div class="interaction-panel">
+            <div class="interaction-header">
+                <h4>Ligand interactions</h4>
+                <div class="interaction-toggles">
+                    <label><input type="checkbox" class="interaction-toggle" value="hbond" checked> H-bonds</label>
+                    <label><input type="checkbox" class="interaction-toggle" value="hydrophobic" checked> Hydrophobic</label>
+                    <label><input type="checkbox" class="interaction-toggle" value="ionic" checked> Ionic</label>
+                    <label><input type="checkbox" class="interaction-toggle" value="aromatic"> Aromatic</label>
+                </div>
+            </div>
+            <div class="viewer-info" id="interactionSummary">Run docking and select a binding mode to inspect nearby amino-acid interactions.</div>
+            <div class="table-wrap" style="margin-top:10px;max-height:220px;overflow:auto">
+                <table class="poses-table" id="interactionTable">
+                    <thead>
+                        <tr><th>Type</th><th>Amino acid</th><th>Protein atom</th><th>Ligand atom</th><th>Distance</th></tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <div class="result-card full-width">
@@ -419,5 +439,5 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="{{ url_for('static', filename='js/docking.js') }}?v=20260517-viewer-pdbqt-safe"></script>
+<script src="{{ url_for('static', filename='js/docking.js') }}?v=20260517-interactions"></script>
 {% endblock %}

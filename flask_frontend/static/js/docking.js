@@ -26,6 +26,8 @@
         dockingResult: null,
         selectedPoseMode: 1,
         selectedComplexPdbqt: null,
+        selectedInteractions: [],
+        interactionTypes: new Set(['hbond', 'hydrophobic', 'ionic']),
 
         previewViewer:  null,   // viewer in params card (protein + ligand + box)
         sourceLigandPreviewViewer: null,
@@ -802,13 +804,11 @@
                 state.selectedPoseMode = parseInt(row.dataset.mode, 10) || 1;
                 state.selectedComplexPdbqt = extractPosePdbqt(data.docked_pdbqt, state.selectedPoseMode);
                 renderViewer(state.proteinPdbqt, state.selectedComplexPdbqt, state.selectedPoseMode);
-                $('dockViewerInfo').textContent = `Receptor in cartoon · selected ligand pose ${state.selectedPoseMode} in orange sticks.`;
             });
         });
 
         $('vinaLog').textContent = data.vina_log || '(no log)';
         renderViewer(state.proteinPdbqt, state.selectedComplexPdbqt, state.selectedPoseMode);
-        $('dockViewerInfo').textContent = `Receptor in cartoon · selected ligand pose ${state.selectedPoseMode} in orange sticks.`;
         $('resultsCard').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
@@ -1019,10 +1019,187 @@
                 sphere: { scale: 0.28, colorscheme: 'orangeCarbon' },
             });
         }
+        state.selectedInteractions = findLigandInteractions(proteinPdbqt, ligandPdbqt);
+        drawInteractions(v, state.selectedInteractions);
+        renderInteractionTable(state.selectedInteractions);
         if (ligandPdbqt) v.zoomTo({ model: 1 });
         else v.zoomTo();
         v.render();
         state.viewer = v;
+        const visibleCount = state.selectedInteractions.filter(i => state.interactionTypes.has(i.type)).length;
+        const hbondCount = state.selectedInteractions.filter(i => i.type === 'hbond').length;
+        const info = $('dockViewerInfo');
+        if (info) {
+            info.textContent = `Receptor in cartoon · selected ligand pose ${mode} in orange sticks · ${visibleCount} displayed interaction(s), ${hbondCount} H-bond(s) detected.`;
+        }
+    }
+
+    function parsePdbqtAtoms(pdbqtText, role) {
+        return (pdbqtText || '').split('\n')
+            .filter(line => /^(ATOM|HETATM)/.test(line))
+            .map((line, idx) => {
+                const atomName = line.slice(12, 16).trim() || `A${idx + 1}`;
+                const resn = line.slice(17, 20).trim() || (role === 'ligand' ? 'LIG' : 'UNK');
+                const chain = line.slice(21, 22).trim();
+                const resi = parseInt(line.slice(22, 26), 10);
+                const parts = line.trim().split(/\s+/);
+                const tailType = parts[parts.length - 1] || '';
+                const element = inferElement(atomName, tailType);
+                return {
+                    idx: idx + 1,
+                    role,
+                    line,
+                    atomName,
+                    resn,
+                    chain,
+                    resi: Number.isFinite(resi) ? resi : null,
+                    x: parseFloat(line.slice(30, 38)),
+                    y: parseFloat(line.slice(38, 46)),
+                    z: parseFloat(line.slice(46, 54)),
+                    element,
+                };
+            })
+            .filter(a => Number.isFinite(a.x) && Number.isFinite(a.y) && Number.isFinite(a.z));
+    }
+
+    function inferElement(atomName, pdbqtType) {
+        const candidate = (pdbqtType || atomName || 'C').replace(/[^A-Za-z]/g, '').toUpperCase();
+        if (candidate.startsWith('CL')) return 'CL';
+        if (candidate.startsWith('BR')) return 'BR';
+        return (candidate[0] || 'C').toUpperCase();
+    }
+
+    function atomDistance(a, b) {
+        const dx = a.x - b.x, dy = a.y - b.y, dz = a.z - b.z;
+        return Math.sqrt(dx * dx + dy * dy + dz * dz);
+    }
+
+    function residueLabel(atom) {
+        const chain = atom.chain ? `${atom.chain}:` : '';
+        const resi = atom.resi === null ? '' : atom.resi;
+        return `${atom.resn} ${chain}${resi}`.trim();
+    }
+
+    function findLigandInteractions(proteinPdbqt, ligandPdbqt) {
+        if (!proteinPdbqt || !ligandPdbqt) return [];
+        const proteinAtoms = parsePdbqtAtoms(proteinPdbqt, 'protein');
+        const ligandAtoms = parsePdbqtAtoms(ligandPdbqt, 'ligand');
+        const interactions = [];
+        const seen = new Set();
+        const proteinCharged = new Set(['ASP', 'GLU', 'LYS', 'ARG', 'HIS']);
+        const aromaticResidues = new Set(['PHE', 'TYR', 'TRP', 'HIS']);
+
+        for (const p of proteinAtoms) {
+            for (const l of ligandAtoms) {
+                const d = atomDistance(p, l);
+                if (d > 5.0) continue;
+                const isPolarPair = ['N', 'O', 'S'].includes(p.element) && ['N', 'O', 'S'].includes(l.element);
+                const isCarbonPair = p.element === 'C' && l.element === 'C';
+
+                if (isPolarPair && d <= 3.5) {
+                    interactions.push(makeInteraction('hbond', p, l, d));
+                }
+                if (isCarbonPair && d <= 4.5) {
+                    interactions.push(makeInteraction('hydrophobic', p, l, d));
+                }
+                if (proteinCharged.has(p.resn) && ['N', 'O'].includes(l.element) && d <= 4.0) {
+                    interactions.push(makeInteraction('ionic', p, l, d));
+                }
+                if (aromaticResidues.has(p.resn) && l.element === 'C' && d <= 5.0) {
+                    interactions.push(makeInteraction('aromatic', p, l, d));
+                }
+            }
+        }
+
+        return interactions
+            .sort((a, b) => a.distance - b.distance)
+            .filter(i => {
+                const key = `${i.type}:${i.proteinResidue}:${i.proteinAtom}:${i.ligandAtom}`;
+                if (seen.has(key)) return false;
+                seen.add(key);
+                return true;
+            })
+            .slice(0, 80);
+    }
+
+    function makeInteraction(type, proteinAtom, ligandAtom, distance) {
+        return {
+            type,
+            proteinAtom,
+            ligandAtom,
+            proteinResidue: residueLabel(proteinAtom),
+            distance,
+        };
+    }
+
+    function interactionColor(type) {
+        return ({
+            hbond: '#2f80ed',
+            hydrophobic: '#f2994a',
+            ionic: '#9b51e0',
+            aromatic: '#27ae60',
+        })[type] || '#888888';
+    }
+
+    function drawInteractions(viewer, interactions) {
+        if (!viewer || !interactions?.length) return;
+        interactions
+            .filter(i => state.interactionTypes.has(i.type))
+            .slice(0, 40)
+            .forEach(i => {
+                viewer.addCylinder({
+                    start: { x: i.proteinAtom.x, y: i.proteinAtom.y, z: i.proteinAtom.z },
+                    end: { x: i.ligandAtom.x, y: i.ligandAtom.y, z: i.ligandAtom.z },
+                    radius: i.type === 'hbond' ? 0.08 : 0.055,
+                    color: interactionColor(i.type),
+                    alpha: 0.82,
+                });
+            });
+    }
+
+    function renderInteractionTable(interactions) {
+        const summary = $('interactionSummary');
+        const tbody = document.querySelector('#interactionTable tbody');
+        if (!summary || !tbody) return;
+        const visible = (interactions || []).filter(i => state.interactionTypes.has(i.type));
+        const counts = ['hbond', 'hydrophobic', 'ionic', 'aromatic']
+            .map(type => `${typeLabel(type)} ${visible.filter(i => i.type === type).length}`)
+            .join(' · ');
+        summary.textContent = visible.length
+            ? `${visible.length} displayed interaction(s): ${counts}`
+            : 'No selected interaction types detected for this pose. Enable other interaction types or select another binding mode.';
+        tbody.innerHTML = visible.slice(0, 40).map(i => `
+            <tr>
+                <td><span style="color:${interactionColor(i.type)};font-weight:700">${typeLabel(i.type)}</span></td>
+                <td>${escapeHtml(i.proteinResidue)}</td>
+                <td>${escapeHtml(i.proteinAtom.atomName)}</td>
+                <td>${escapeHtml(i.ligandAtom.atomName)}</td>
+                <td>${i.distance.toFixed(2)} Å</td>
+            </tr>
+        `).join('');
+    }
+
+    function typeLabel(type) {
+        return ({
+            hbond: 'H-bond',
+            hydrophobic: 'Hydrophobic',
+            ionic: 'Ionic',
+            aromatic: 'Aromatic',
+        })[type] || type;
+    }
+
+    function escapeHtml(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+        })[ch]);
+    }
+
+    function refreshInteractionDisplay() {
+        if (state.viewer) {
+            renderViewer(state.proteinPdbqt, state.selectedComplexPdbqt, state.selectedPoseMode);
+        } else {
+            renderInteractionTable(state.selectedInteractions);
+        }
     }
 
     function renderVSViewer(proteinPdbqt, ligandPdbqt) {
@@ -1059,6 +1236,7 @@
         state.ligandPreviewViewer = null;
         state.selectedPoseMode = 1;
         state.selectedComplexPdbqt = null;
+        state.selectedInteractions = [];
         $('blindDockingToggle').checked = false;
         disableBlindDocking();
         setStep('upload');
@@ -1136,6 +1314,14 @@
         $('btnRunVS').addEventListener('click',     runVirtualScreening);
         $('btnExportCSV').addEventListener('click', exportCSV);
         $('btnDownloadComplex')?.addEventListener('click', downloadSelectedComplex);
+        document.querySelectorAll('.interaction-toggle').forEach(input => {
+            input.addEventListener('change', () => {
+                state.interactionTypes = new Set(
+                    Array.from(document.querySelectorAll('.interaction-toggle:checked')).map(el => el.value),
+                );
+                refreshInteractionDisplay();
+            });
+        });
         $('btnReset').addEventListener('click',     resetSingle);
         $('btnResetVS').addEventListener('click',   resetVS);
     });

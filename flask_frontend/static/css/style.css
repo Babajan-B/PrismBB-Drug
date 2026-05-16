@@ -1401,6 +1401,50 @@ img { max-width: 100%; display: block; }
 .poses-table tbody tr.active { background: var(--accent-light); color: var(--accent); }
 .poses-table .affinity-cell { color: var(--green); font-weight: 700; font-family: var(--font-mono); }
 
+.interaction-panel {
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border);
+}
+.interaction-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+.interaction-header h4 {
+    font-size: 0.92rem;
+    margin: 0;
+    color: var(--txt-1);
+}
+.interaction-toggles {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.interaction-toggles label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-height: 32px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    background: var(--bg);
+    color: var(--txt-2);
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    user-select: none;
+}
+.interaction-toggles input {
+    width: 14px;
+    height: 14px;
+    accent-color: var(--accent);
+}
+
 /* ---------- VIRTUAL SCREENING ---------- */
 .poses-table tbody tr.vs-row-fail { opacity: 0.55; cursor: default; }
 .poses-table tbody tr.vs-row-fail:hover { background: transparent; }
